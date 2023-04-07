@@ -5,7 +5,7 @@ on:
     - main
 env:
   AZURE_FUNCTIONAPP_NAME: CarbonAwareComputingExecutionForecast
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: CarbonAwareComputing.ExecutionForecast.Function/.
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: CarbonAwareComputing.ExecutionForecast.Function/./src
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 6.0.x
   WORKING_DIRECTORY: CarbonAwareComputing.ExecutionForecast.Function
