@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<PackageId>CarbonAwareComputing.ExecutionForecast</PackageId>
+		<Version>1.0.1-beta</Version>
+		<Authors>bluehands</Authors>
+		<Company></Company>
+		<PackageTags>bluehands</PackageTags>
+		<Title>Carbon Aware Computing - Execution forcast</Title>
+		<RepositoryUrl>https://github.com/bluehands/Carbon-Aware-Computing.git</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<Description>
+			Get the best execution time with with minimal grid carbon intensity for task and background jobs.
+		</Description>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="GSF.CarbonAware.Unofficial" Version="1.0.2-beta" />
+
+	</ItemGroup>
+</Project>

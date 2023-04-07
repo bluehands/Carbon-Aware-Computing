@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "CarbonAwareComputing.ExecutionForecast.Function": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7226",
+      "launchBrowser": false
+    }
+  }
+}
