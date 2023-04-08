@@ -13,6 +13,10 @@
       "Function": "Error",
       "Host.Aggregator": "Information"
     },
+    "aggregator": {
+      "batchSize": 1000,
+      "flushTimeout": "00:00:30"
+    },
     "applicationInsights": {
       "samplingSettings": {
         "isEnabled": true,

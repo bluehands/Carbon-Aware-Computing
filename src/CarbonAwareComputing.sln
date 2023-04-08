@@ -5,7 +5,11 @@ VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.ExecutionForecast", "CarbonAwareComputing.ExecutionForecast\CarbonAwareComputing.ExecutionForecast.csproj", "{A9315047-8FA8-4F9D-A46B-C9D0D11A6C6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarbonAwareComputing.ExecutionForecast.Function", "CarbonAwareComputing.ExecutionForecast.Function\CarbonAwareComputing.ExecutionForecast.Function.csproj", "{E32A9A7A-17CD-41EE-8B15-75A33D27268F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.ExecutionForecast.Function", "CarbonAwareComputing.ExecutionForecast.Function\CarbonAwareComputing.ExecutionForecast.Function.csproj", "{E32A9A7A-17CD-41EE-8B15-75A33D27268F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.ForecastUpdater.Function", "CarbonAwareComputing.ForecastUpdater.Function\CarbonAwareComputing.ForecastUpdater.Function.csproj", "{67918CA5-B410-4B1F-9583-E4254C2976C4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.ForecastUpdater", "CarbonAwareComputing.ForecastUpdater\CarbonAwareComputing.ForecastUpdater.csproj", "{44A07509-6846-4A3C-A7A7-468D40DC69F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{E32A9A7A-17CD-41EE-8B15-75A33D27268F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E32A9A7A-17CD-41EE-8B15-75A33D27268F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E32A9A7A-17CD-41EE-8B15-75A33D27268F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67918CA5-B410-4B1F-9583-E4254C2976C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67918CA5-B410-4B1F-9583-E4254C2976C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67918CA5-B410-4B1F-9583-E4254C2976C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67918CA5-B410-4B1F-9583-E4254C2976C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44A07509-6846-4A3C-A7A7-468D40DC69F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44A07509-6846-4A3C-A7A7-468D40DC69F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44A07509-6846-4A3C-A7A7-468D40DC69F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44A07509-6846-4A3C-A7A7-468D40DC69F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

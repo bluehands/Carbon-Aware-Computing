@@ -20,6 +20,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Primitives;
 using System.Xml.Linq;
 using System.Net.Mail;
+using System.Web.Http;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -48,37 +49,45 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "failed operation", Description = "failed operation")]
         [FunctionName("Register")]
         public async Task<IActionResult> Register(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "register")]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "register")]
             HttpRequest req,
             ExecutionContext context,
             ILogger log)
         {
-            using var streamReader = new StreamReader(req.Body);
-            var requestBody = await streamReader.ReadToEndAsync();
-            var registration = JsonConvert.DeserializeObject<RegistrationData>(requestBody);
-            var mailAddress = registration?.MailAddress;
-            if (string.IsNullOrWhiteSpace(mailAddress))
+            try
             {
-                return new BadRequestObjectResult(new ProblemDetails()
+                using var streamReader = new StreamReader(req.Body);
+                var requestBody = await streamReader.ReadToEndAsync();
+                var registration = JsonConvert.DeserializeObject<RegistrationData>(requestBody);
+                var mailAddress = registration?.MailAddress;
+                if (string.IsNullOrWhiteSpace(mailAddress))
                 {
-                    Detail = "Invalid or empty mail address",
-                    Status = 400
-                });
+                    return new BadRequestObjectResult(new ProblemDetails()
+                    {
+                        Detail = "Invalid or empty mail address",
+                        Status = 400
+                    });
+                }
+
+                var apiKey = await StringCipher.EncryptAsync(mailAddress, m_ApplicationSettings.Value.ApiKeyPassword!);
+
+                var template = await System.IO.File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
+                if (!await SendApiKeyAsync(log, mailAddress, apiKey, template))
+                {
+                    return new BadRequestObjectResult(new ProblemDetails()
+                    {
+                        Detail = "Could not send the API-Key",
+                        Status = 400
+                    });
+                }
+
+                return new NoContentResult();
             }
-
-            var apiKey = await StringCipher.EncryptAsync(mailAddress, m_ApplicationSettings.Value.ApiKeyPassword);
-
-            var template = await System.IO.File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
-            if (!await SendApiKeyAsync(mailAddress, apiKey, template))
+            catch (Exception ex)
             {
-                return new BadRequestObjectResult(new ProblemDetails()
-                {
-                    Detail = "Could not send the API-Key",
-                    Status = 400
-                });
+                log.LogError($"Unexpected Error. {ex}");
+                return new InternalServerErrorResult();
             }
-
-            return new NoContentResult();
         }
 
         [OpenApiOperation(operationId: "GetBestExecutionTime", tags: new[] { "forecast" }, Summary = "Get the best execution time with minimal grid carbon intensity", Description = "Get the best execution time with minimal grid carbon intensity. A time intervall of the given duration within the earliest and latest execution time with the most renewable energy in the power grid of the location", Visibility = OpenApiVisibilityType.Important)]
@@ -92,71 +101,73 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "failed operation", Description = "failed operation")]
         [FunctionName("GetBestExecutionTime")]
         public async Task<IActionResult> GetBestExecutionTime(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "forecasts/current")]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "forecasts/current")]
             HttpRequest req,
             ILogger log)
         {
-            var apiKeyHeader = req.Headers.FirstOrDefault(h => h.Key.Equals("x-api-key", StringComparison.InvariantCultureIgnoreCase));
-            var apiKey = apiKeyHeader.Value.ToArray().FirstOrDefault();
-            if (string.IsNullOrEmpty(apiKey))
+            try
             {
-                return new StatusCodeResult(403);
-            }
-
-            var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword!);
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                return new StatusCodeResult(403);
-            }
-            var location = req.Query["location"];
-            if (location.Count == 0)
-            {
-                return new BadRequestObjectResult(new ProblemDetails()
+                var apiKeyHeader = req.Headers.FirstOrDefault(h => h.Key.Equals("x-api-key", StringComparison.InvariantCultureIgnoreCase));
+                var apiKey = apiKeyHeader.Value.ToArray().FirstOrDefault();
+                if (string.IsNullOrEmpty(apiKey))
                 {
-                    Detail = "Requiered parameter 'location' not provided",
-                    Status = Convert.ToInt32(HttpStatusCode.NotFound)
-                });
-            }
+                    return new StatusCodeResult(403);
+                }
 
-            if (!TryGetDateTimeOffset(req.Query["dataStartAt"], DateTimeOffset.MinValue, out var dataStartAt))
-            {
-                return new BadRequestObjectResult(new ProblemDetails()
+                var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword!);
+                if (string.IsNullOrEmpty(apiKey))
                 {
-                    Detail = "Optional parameter 'dataStartAt' is bad formated",
-                    Status = Convert.ToInt32(HttpStatusCode.BadRequest)
-                });
-            }
-
-            if (!TryGetDateTimeOffset(req.Query["dataEndAt"], DateTimeOffset.MaxValue, out var dataEndAt))
-            {
-                return new BadRequestObjectResult(new ProblemDetails()
+                    return new StatusCodeResult(403);
+                }
+                var location = req.Query["location"];
+                if (location.Count == 0)
                 {
-                    Detail = "Optional parameter 'dataEndAt' is bad formated",
-                    Status = Convert.ToInt32(HttpStatusCode.BadRequest)
-                });
-            }
-
-            if (!TryGetInt(req.Query["windowSize"], 5, out var windowSize))
-            {
-                return new BadRequestObjectResult(new ProblemDetails()
-                {
-                    Detail = "Optional parameter 'windowSize' is bad formated",
-                    Status = Convert.ToInt32(HttpStatusCode.BadRequest)
-                });
-            }
-
-            var forecasts = new List<EmissionsForecast>();
-            foreach (var l in location.First().Split(','))
-            {
-                var computingLocation = new ComputingLocation(l.Trim());
-                var best = await m_Provider.CalculateBestExecutionTime(computingLocation, dataStartAt, dataEndAt, TimeSpan.FromMinutes(windowSize));
-                if (best is ExecutionTime.BestExecutionTime_ bestExecutionTime)
-                {
-                    forecasts.Add(new EmissionsForecast
+                    return new BadRequestObjectResult(new ProblemDetails()
                     {
-                        Location = computingLocation.Name,
-                        WindowSize = windowSize,
-                        OptimalDataPoints = new List<EmissionsData>
+                        Detail = "Requiered parameter 'location' not provided",
+                        Status = Convert.ToInt32(HttpStatusCode.NotFound)
+                    });
+                }
+
+                if (!TryGetDateTimeOffset(req.Query["dataStartAt"], DateTimeOffset.MinValue, out var dataStartAt))
+                {
+                    return new BadRequestObjectResult(new ProblemDetails()
+                    {
+                        Detail = "Optional parameter 'dataStartAt' is bad formated",
+                        Status = Convert.ToInt32(HttpStatusCode.BadRequest)
+                    });
+                }
+
+                if (!TryGetDateTimeOffset(req.Query["dataEndAt"], DateTimeOffset.MaxValue, out var dataEndAt))
+                {
+                    return new BadRequestObjectResult(new ProblemDetails()
+                    {
+                        Detail = "Optional parameter 'dataEndAt' is bad formated",
+                        Status = Convert.ToInt32(HttpStatusCode.BadRequest)
+                    });
+                }
+
+                if (!TryGetInt(req.Query["windowSize"], 5, out var windowSize))
+                {
+                    return new BadRequestObjectResult(new ProblemDetails()
+                    {
+                        Detail = "Optional parameter 'windowSize' is bad formated",
+                        Status = Convert.ToInt32(HttpStatusCode.BadRequest)
+                    });
+                }
+
+                var forecasts = new List<EmissionsForecast>();
+                foreach (var l in location.First().Split(','))
+                {
+                    var computingLocation = new ComputingLocation(l.Trim());
+                    var best = await m_Provider.CalculateBestExecutionTime(computingLocation, dataStartAt, dataEndAt, TimeSpan.FromMinutes(windowSize));
+                    if (best is ExecutionTime.BestExecutionTime_ bestExecutionTime)
+                    {
+                        forecasts.Add(new EmissionsForecast
+                        {
+                            Location = computingLocation.Name,
+                            WindowSize = windowSize,
+                            OptimalDataPoints = new List<EmissionsData>
                         {
                             new()
                             {
@@ -164,30 +175,36 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                                 Value = bestExecutionTime.Rating
                             }
                         }
-                    });
+                        });
+                    }
                 }
+
+
+                if (forecasts.Count > 0)
+                {
+                    return new OkObjectResult(forecasts);
+                }
+
+                return new NotFoundResult();
             }
-
-
-            if (forecasts.Count > 0)
+            catch (Exception ex)
             {
-                return new OkObjectResult(forecasts);
+                log.LogError($"Unexpected Error. {ex}");
+                return new InternalServerErrorResult();
             }
-
-            return new NotFoundResult();
         }
 
         [OpenApiOperation(operationId: "GetLocations", tags: new[] { "forecast" }, Summary = "Get a list of available locations. Not all locations are active, to avoid unnecessary computing. Send a message to 'a.mirmohammadi@bluehands.de' to activate a location.", Description = "Get a list of available locations. Not all locations are active, to avoid unnecessary computing. Send a message to 'a.mirmohammadi@bluehands.de' to activate a location.", Visibility = OpenApiVisibilityType.Important)]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(AvailableLocation[]), Summary = "Operation succeeded", Description = "Operation succeeded")]
         [FunctionName("GetLocations")]
         public IActionResult GetLocations(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "locations")]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "locations")]
             HttpRequest req,
             ILogger log)
         {
             return new OkObjectResult(ComputingLocations.All.Select(c => new AvailableLocation(c.Name, c.IsActive)));
         }
-        private async Task<bool> SendApiKeyAsync(string mailAddress, string apiKey, string template)
+        private async Task<bool> SendApiKeyAsync(ILogger log, string mailAddress, string apiKey, string template)
         {
             var tenantId = m_ApplicationSettings.Value.TenantId;
             var clientId = m_ApplicationSettings.Value.ClientId;
@@ -228,6 +245,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
             }
             catch (Exception ex)
             {
+                log.LogError($"Could not send mail to {mailAddress}. Error: {ex.Message}");
                 return false;
             }
         }
@@ -242,7 +260,6 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
             date = defaultDate;
             return true;
         }
-
         private static bool TryGetInt(StringValues values, int defaultData, out int data)
         {
             var d = values.FirstOrDefault();
