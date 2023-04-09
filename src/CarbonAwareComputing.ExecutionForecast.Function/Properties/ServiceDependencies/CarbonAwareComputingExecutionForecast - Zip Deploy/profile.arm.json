@@ -21,7 +21,7 @@
     },
     "resourceName": {
       "type": "string",
-      "defaultValue": "CarbonAwareComputingForecastUpdaterFunction",
+      "defaultValue": "CarbonAwareComputingExecutionForecast",
       "metadata": {
         "description": "Name of the main resource to be created by this template."
       }

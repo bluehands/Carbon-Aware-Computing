@@ -11,7 +11,7 @@
     <PackageReference Include="Azure.Identity" Version="1.8.2" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.15.1" />
     <PackageReference Include="FunicularSwitch" Version="4.0.0" />
-    <PackageReference Include="GSF.CarbonAware.Unofficial" Version="1.0.2-beta" />
+    <PackageReference Include="GSF.CarbonAware.Unofficial" Version="1.0.3" />
   </ItemGroup>
 
   <ItemGroup>

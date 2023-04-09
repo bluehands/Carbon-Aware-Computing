@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CarbonAwareComputing.ExecutionForecast;
 
-public class CarbonAwareDataProviderOnlineForecastFile : CarbonAwareDataProviderCachedData
+public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
 {
     protected override async Task<CachedData> FillEmissionsDataCache(ComputingLocation location, CachedData currentCachedData)
     {

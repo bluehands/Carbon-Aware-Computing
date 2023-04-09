@@ -5,22 +5,24 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>CarbonAwareComputing.ExecutionForecast</PackageId>
-		<Version>1.0.2-beta</Version>
+		<Version>1.0.3</Version>
 		<PackageTags>Carbon Aware, Green Software, Forecast</PackageTags>
-		<Authors>bluehands GmbH &amp; Co.mmunication KG</Authors>
-		<Company></Company>
+		<Authors>Implemented with 💙 by bluehands</Authors>
+		<Company>bluehands GmbH &amp; Co.mmunication KG</Company>
 		<PackageTags>bluehands</PackageTags>
 		<Title>Carbon Aware Computing - Execution forcast</Title>
 		<RepositoryUrl>https://github.com/bluehands/Carbon-Aware-Computing.git</RepositoryUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Description>
-			Get the best execution time with with minimal grid carbon intensity for task and background jobs.
+			Get the best execution time with with minimal grid carbon intensity for tasks and background jobs.
 		</Description>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	</PropertyGroup>
-
 	<ItemGroup>
-		<PackageReference Include="GSF.CarbonAware.Unofficial" Version="1.0.2-beta" />
-
+		<None Include="../../README.md" Pack="true" PackagePath="\"/>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="GSF.CarbonAware.Unofficial" Version="1.0.3" />
 	</ItemGroup>
 </Project>
