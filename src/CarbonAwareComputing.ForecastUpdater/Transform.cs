@@ -15,7 +15,7 @@ public static class Transform
             var axis = root.XAxisValues.Select(x => DateTimeOffset.FromUnixTimeMilliseconds(x)).ToArray();
             if (axis.Length <= 2)
             {
-                return Result.Error<EmissionsForecast>("not enough data in forecast available");
+                return Result.Error<EmissionsForecast>($"not enough data in forecast available for {country}");
             }
             var duration = axis[1] - axis[0];
             var forecast = new List<EmissionsData>();

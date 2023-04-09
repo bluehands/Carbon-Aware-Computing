@@ -67,7 +67,7 @@ After installation add the extension to the Hangfire configuration.
 
 ``` csharp
 builder.Services.AddHangfire(configuration => configuration
-    .UseCarbonAwareExecution(new CarbonAwareDataProviderBuildIn(ComputingLocations.Germany))
+    UseCarbonAwareExecution(new CarbonAwareDataProviderOpenData(), ComputingLocations.Germany)
 );
 ```
 

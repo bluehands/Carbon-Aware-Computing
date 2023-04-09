@@ -29,7 +29,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
 
 
         [FunctionName("ScheduledUpdateForecast")]
-        public async Task ScheduledUpdateForecast([TimerTrigger("0 20 8,12,16,19,21 * * *")] TimerInfo myTimer, ILogger log)
+        public async Task ScheduledUpdateForecast([TimerTrigger("0 20 8,12,16,18,19,20 * * *")] TimerInfo myTimer, ILogger log)
         {
             await Update(log);
         }
