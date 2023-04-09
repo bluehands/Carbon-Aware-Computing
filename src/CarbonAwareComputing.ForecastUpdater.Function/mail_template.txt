@@ -1,0 +1,7 @@
+Hello,
+
+here your statistics 
+
+{{STATISTICS}}
+
+Aydin 

@@ -13,6 +13,16 @@ using System.Net.Http;
 using System.Runtime.CompilerServices;
 using FunicularSwitch;
 using static System.Net.WebRequestMethods;
+using HandlebarsDotNet;
+using System.Net.Mail;
+using Azure.Identity;
+using System.Collections.Generic;
+using System.Text;
+using Microsoft.Extensions.Options;
+using Microsoft.Graph;
+using BodyType = WireMock.Types.BodyType;
+using Message = Microsoft.Azure.ServiceBus.Message;
+
 // ReSharper disable StringLiteralTypo
 // ReSharper disable ConvertClosureToMethodGroup
 
@@ -20,10 +30,12 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
 {
     public class ForecastUpdateFunction
     {
+        private readonly IOptions<ApplicationSettings> m_ApplicationSettings;
         private readonly HttpClient m_Http;
 
-        public ForecastUpdateFunction(IHttpClientFactory httpClientFactory)
+        public ForecastUpdateFunction(IHttpClientFactory httpClientFactory, IOptions<ApplicationSettings> applicationSettings)
         {
+            m_ApplicationSettings = applicationSettings;
             m_Http = httpClientFactory.CreateClient();
         }
 
@@ -31,19 +43,34 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
         [FunctionName("ScheduledUpdateForecast")]
         public async Task ScheduledUpdateForecast([TimerTrigger("0 20 8,12,16,18,19,20 * * *")] TimerInfo myTimer, ILogger log)
         {
-            await Update(log);
+            await UpdateForecast(log);
         }
 
+        [FunctionName("ScheduledReportForecast")]
+        public async Task ScheduledReportForecast([TimerTrigger("0 20 8 * * *")] TimerInfo myTimer, ExecutionContext context, ILogger log)
+        {
+            await ReportForecast(log, context.FunctionAppDirectory);
+        }
         [FunctionName("ManualUpdateForecast")]
         public async Task<IActionResult> ManualUpdateForecast(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             ILogger log)
         {
-            await Update(log);
+            await UpdateForecast(log);
             return new OkObjectResult("Updated");
         }
 
-        private async Task Update(ILogger log)
+        [FunctionName("ManualReportForecast")]
+        public async Task<IActionResult> ManualReportForecast(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+            ExecutionContext context,
+            ILogger log)
+        {
+            await ReportForecast(log, context.FunctionAppDirectory);
+            return new OkObjectResult("Reported");
+        }
+
+        private async Task UpdateForecast(ILogger log)
         {
             var energyChartsClient = GetEnergyChartsClient();
             var cachedForecastClient = new CachedForecastClient("carbonawarecomputing", "forecasts");
@@ -66,6 +93,34 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
             }
         }
 
+        private async Task ReportForecast(ILogger log, string currentDirectory)
+        {
+            var forecastStatisticsClient = new ForecastStatisticsClient("carbonawarecomputing", "forecasts");
+            var statistics = await forecastStatisticsClient.GetForecastData();
+            string messageText = statistics.Match(
+                s =>
+                {
+                    var sb = new StringBuilder();
+                    sb.
+                        Append("GeneratedAt").Append("\t").
+                        Append("UploadedAt").Append("\t").
+                        Append("ForecastDurationInHours").Append("\t").
+                        Append("LastForecast").AppendLine();
+                    foreach (var row in s)
+                    {
+                        sb.
+                            Append(row.GeneratedAt).Append("\t").
+                            Append(row.UploadedAt).Append("\t").
+                            Append(row.ForecastDurationInHours).Append("\t").
+                            Append(row.LastForecast).AppendLine();
+                    }
+                    return sb.ToString();
+                },
+                e => $"Could not get forecast: {e}");
+
+            var template = await System.IO.File.ReadAllTextAsync(Path.Combine(currentDirectory, "mail_template.txt"));
+            await SendStatisticsAsync(log, m_ApplicationSettings.Value.MailFrom, messageText, template);
+        }
         private EnergyChartsClient GetEnergyChartsClient()
         {
             var client = new EnergyChartsClient(async u =>
@@ -80,6 +135,51 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
                 }
             });
             return client;
+        }
+        private async Task<bool> SendStatisticsAsync(ILogger log, string mailAddress, string statistics, string template)
+        {
+            var tenantId = m_ApplicationSettings.Value.TenantId;
+            var clientId = m_ApplicationSettings.Value.ClientId;
+            var clientSecret = m_ApplicationSettings.Value.ClientSecret;
+
+            var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+            var graphClient = new GraphServiceClient(credential);
+
+            Microsoft.Graph.Message message = new()
+            {
+                Subject = "Statistics for Carbon Aware Computing Execution Forecast ",
+                Body = new ItemBody
+                {
+                    ContentType = Microsoft.Graph.BodyType.Text,
+                    Content = template.Replace("{{STATISTICS}}", statistics)
+                },
+                ToRecipients = new List<Recipient>()
+                {
+                    new Recipient
+                    {
+                        EmailAddress = new EmailAddress
+                        {
+                            Address = mailAddress
+                        }
+                    }
+                }
+            };
+
+            bool saveToSentItems = true;
+
+            try
+            {
+                await graphClient.Users[m_ApplicationSettings.Value.MailFrom]
+                    .SendMail(message, saveToSentItems)
+                    .Request()
+                    .PostAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                log.LogError($"Could not send mail to {mailAddress}. Error: {ex.Message}");
+                return false;
+            }
         }
     }
 }

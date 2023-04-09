@@ -25,7 +25,7 @@ using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
-using File = Microsoft.Graph.File;
+
 
 namespace CarbonAwareComputing.ExecutionForecast.Function
 {
