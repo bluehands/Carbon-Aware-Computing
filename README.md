@@ -12,7 +12,7 @@ This project will deliver a set of libraries, services and data. There are mostl
 
 ## Get the best execution time as library
 
-Use the nuget-package for your .NET project to get the best execution time for a task, in a given Execution-Window for a estimated duration. The lib will calculate the optimal execution time within the provided forecast data.
+Use the NuGet-package for your .NET project to get the best execution time for a task, in a given Execution-Window for a estimated duration. The lib will calculate the optimal execution time within the provided forecast data.
 
 ### Installation
 
@@ -57,7 +57,7 @@ Hangfire is one of the most used tools for background processing in .NET. Use th
 
 ### Installation
 
-HangfireCarbonAwareExecution is available as a NuGet package. You can install it using the NuGet Package Console window:
+HangfireCarbonAwareExecution is available as a NuGet package. You can install it using the NuGet-Package Console window:
 
 ``` powershell
 Install-Package Hangfire.CarbonAwareExecution
@@ -66,9 +66,8 @@ Install-Package Hangfire.CarbonAwareExecution
 After installation add the extension to the Hangfire configuration.
 
 ``` csharp
-builder.Services.AddHangfire(configuration => configuration
-    UseCarbonAwareExecution(new CarbonAwareDataProviderOpenData(), ComputingLocations.Germany)
-);
+builder.Services.AddHangfire(configuration => configuration.
+    UseCarbonAwareExecution(new CarbonAwareDataProviderOpenData(), ComputingLocations.Germany));
 ```
 
 ### Usage
@@ -81,7 +80,7 @@ We provide a live and ready to use subset of the Carbon Aware SDK. The API is av
 
 ### Registration
 
-To use the API, you have to register to the service submitting a valid eMail-Address. Please check the *register* endpoint in the Swagger UI. The API-Key is send to this email. We will use this address only to inform you about important changes to the service.
+To use the API, you must register to the service submitting a valid eMail-Address. Please check the *register* endpoint in the Swagger UI. The API-Key is send to this email. We will use this address only to inform you about important changes to the service.
 
 ``` powershell
 curl -X POST "https://forecast.carbon-aware-computing.com/register" -H  "accept: */*" -H  "Content-Type: application/json" -d "{\"mailAddress\":\"someone@example.com\"}"
@@ -91,13 +90,13 @@ curl -X POST "https://forecast.carbon-aware-computing.com/register" -H  "accept:
 
 We want to support the time-shifting functionality of the SDK and provide only the forecast endpoint for given locations. There are no historically data and the forecast data has only the *optimalDataPoints* collection set. The *emissionsDataPoints* with all forecast data is not set due to data efficiency. If you need the forecast data download it directly.
 
-## Carbon Aware SDK as Library
+## Carbon Aware SDK as NuGet-Package
 
-We have fork the Carbon Aware SDK [https://github.com/bluehands/carbon-aware-sdk](https://github.com/bluehands/carbon-aware-sdk) and provide the SKD as a nuget-Package. The fork has also some modifications for cached data provider. You may use this package for your extensions.
+We have fork the Carbon Aware SDK [https://github.com/bluehands/carbon-aware-sdk](https://github.com/bluehands/carbon-aware-sdk) and provide the SDK as a NuGet-Package. The fork has also some modifications for cached data provider. You may use this package for your extensions.
 
 ### Installation
 
-The unofficial Carbon Aware SDK is available as a NuGet package. You can install it using the NuGet Package Console window:
+The unofficial Carbon Aware SDK is available form [nuget.org](https://www.nuget.org/packages/GSF.CarbonAware.Unofficial). Install it using the Package Manager Console window:
 
 ``` powershell
 Install-Package GSF.CarbonAware.Unofficial
@@ -115,7 +114,7 @@ The forecast data is available as json formatted files for every location. The f
 curl -X GET "https://carbonawarecomputing.blob.core.windows.net/forecasts/{LOCATION}.json" -H  "accept: application/json"
 ```
 
-Replace the {LOCATION} with one of the supported locations.
+Replace the {LOCATION} with one of the supported locations two letter country code (e.g. "de").
 
 ### Available and supported locations
 
@@ -129,11 +128,11 @@ curl -X GET "https://forecast.carbon-aware-computing.com/locations" -H  "accept:
 
 The forecast data is based on reported energy production (current) and forecast production for Wind (on-shore & off-shore) and Solar. This information's are send to the ENTSO-E Transparency Platform by the power grid Transmission System Operators (TSO). For the additional renewable energy sources like running water, bio mass the forecast is calculated as an interpolation of the last hours. After that the share of renewable energy is calculated as the quotient of generated renewable energy to all generated energy. This forecast is very accurate because it is used by the TSO to manage the power grid. The data is recalculated every hour by *Energy Charts*. The forecast for next day is available at 19:00+02.
 
-In future *Energy Charts* will provide mid term forecast based on weather forecast and on calculations as well.
+In future *Energy Charts* will provide mid term forecast based on weather forecast and own calculations as well.
 
 ## Contribution
 
-Every contribution is warmly welcome. You may contribute to forecast data for other regions than Europe or help to integrate time-shifting in other processing systems and libraries.
+Every contribution is warmly welcome. You may contribute to forecast data for other regions than Europe or help to integrate time-shifting in popular processing systems and libraries. Migration to other programming languages and runtime systems is very efficacious as well.
 
 ### Contact
 
