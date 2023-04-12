@@ -78,9 +78,9 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
             foreach (var computingLocation in ComputingLocations.All.Where(l => l.IsActive))
             {
                 await energyChartsClient.GetForecastAsync(computingLocation.Name).Bind(
-                    energyChartsRoot => Transform.ImportForecast(energyChartsRoot, computingLocation.Name)).Bind(
+                    energyChartsRoot => EnergyChartsTransform.ImportForecast(energyChartsRoot, computingLocation.Name)).Bind(
                     emissionsForecast => forecastStatisticsClient.UpdateForecastData(computingLocation, emissionsForecast)).Bind(
-                    emissionsForecast => Transform.Serialize(emissionsForecast)).Bind(
+                    emissionsForecast => EnergyChartsTransform.Serialize(emissionsForecast)).Bind(
                     json => cachedForecastClient.UpdateForecastData(computingLocation, json)
                 ).Match(
                     o => No.Thing,
@@ -102,6 +102,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
                 {
                     var sb = new StringBuilder();
                     sb.
+                        Append("Location").Append("\t").
                         Append("GeneratedAt").Append("\t").
                         Append("UploadedAt").Append("\t").
                         Append("ForecastDurationInHours").Append("\t").
@@ -109,6 +110,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
                     foreach (var row in s)
                     {
                         sb.
+                            Append(row.RowKey).Append("\t").
                             Append(row.GeneratedAt).Append("\t").
                             Append(row.UploadedAt).Append("\t").
                             Append(row.ForecastDurationInHours).Append("\t").

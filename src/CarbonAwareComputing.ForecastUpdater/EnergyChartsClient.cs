@@ -12,7 +12,7 @@ public class EnergyChartsClient
         m_GetContent = getContent;
     }
 
-    public async Task<Result<EnergyChartRoot>> GetForecastAsync(string country)
+    public async Task<Result<List<EnergyChartRoot>>> GetForecastAsync(string country)
     {
         try
         {
@@ -32,12 +32,11 @@ public class EnergyChartsClient
                     }
                     return roots;
                 }
-                )
-                .Map(root => root.First());
+                );
         }
         catch (Exception ex)
         {
-            return Result.Error<EnergyChartRoot>(ex.Message);
+            return Result.Error<List<EnergyChartRoot>>(ex.Message);
         }
     }
 }

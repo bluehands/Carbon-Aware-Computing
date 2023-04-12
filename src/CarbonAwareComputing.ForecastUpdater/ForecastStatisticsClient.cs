@@ -35,7 +35,7 @@ public class ForecastStatisticsClient
                 { "ForecastDurationInHours", (last.Time-first.Time).TotalHours },
                 { "LastForecast", last.Time }
             };
-            await tableClient.AddEntityAsync(tableEntity);
+            await tableClient.UpdateEntityAsync(tableEntity, ETag.All, TableUpdateMode.Replace);
             return emissionsForecast;
         }
         catch (Exception ex)
