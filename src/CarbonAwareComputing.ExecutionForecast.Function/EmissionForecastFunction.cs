@@ -18,11 +18,8 @@ using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Primitives;
-using System.Xml.Linq;
-using System.Net.Mail;
 using System.Web.Http;
 using Azure.Identity;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
 
@@ -101,7 +98,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "failed operation", Description = "failed operation")]
         [FunctionName("GetBestExecutionTime")]
         public async Task<IActionResult> GetBestExecutionTime(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "forecasts/current")]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "emissions/forecasts/current")]
             HttpRequest req,
             ILogger log)
         {

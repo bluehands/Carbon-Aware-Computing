@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>CarbonAwareComputing.ExecutionForecast</PackageId>
-		<Version>1.0.3</Version>
+		<Version>1.0.5</Version>
 		<PackageTags>Carbon Aware, Green Software, Forecast</PackageTags>
 		<Authors>Implemented with 💙 by bluehands</Authors>
 		<Company>bluehands GmbH &amp; Co.mmunication KG</Company>
@@ -20,9 +20,9 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	</PropertyGroup>
 	<ItemGroup>
-		<None Include="../../README.md" Pack="true" PackagePath="\"/>
+		<None Include="../../README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="GSF.CarbonAware.Unofficial" Version="1.0.3" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
 	</ItemGroup>
 </Project>

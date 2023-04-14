@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.Metrics;
-using System.Reflection.Metadata.Ecma335;
-using CarbonAware.Model;
+﻿using CarbonAware.Model;
 using FunicularSwitch;
 
 namespace CarbonAwareComputing.ForecastUpdater;

@@ -2,8 +2,6 @@
 
 // ReSharper disable InconsistentNaming
 
-using CarbonAware.DataSources.Memory;
-using CarbonAware.Model;
 
 namespace CarbonAwareComputing.ExecutionForecast;
 

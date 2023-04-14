@@ -1,11 +1,14 @@
 ﻿using System.Net.Http.Headers;
 using CarbonAware.Model;
 using Microsoft.Extensions.DependencyInjection;
+// ReSharper disable InconsistentNaming
 
 namespace CarbonAwareComputing.ExecutionForecast;
 
 public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
 {
+    private static readonly HttpClient httpClient = new HttpClient();
+    
     protected override async Task<CachedData> FillEmissionsDataCache(ComputingLocation location, CachedData currentCachedData)
     {
         if (DateTimeOffset.Now < currentCachedData.LastUpdate.AddMinutes(5))
@@ -15,7 +18,6 @@ public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
 
         var locationName = location.Name;
         var uri = new Uri($"https://carbonawarecomputing.blob.core.windows.net/forecasts/{locationName}.json");
-        var httpClient = Services.GetService<HttpClient>()!;
         httpClient.DefaultRequestHeaders.IfNoneMatch.Clear();
         var eTag = currentCachedData.Version;
         if (string.IsNullOrEmpty(eTag))

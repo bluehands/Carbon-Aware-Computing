@@ -1,7 +1,4 @@
-﻿using System;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.Unicode;
+﻿using System.Text;
 using CarbonAware.Model;
 using FunicularSwitch;
 // ReSharper disable InconsistentNaming

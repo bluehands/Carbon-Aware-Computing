@@ -122,12 +122,12 @@ public class OfflineJsonEmissionsDataProvider : JsonEmissionsDataProviderBase
     }
 }
 
-internal class EmissionsForecastJsonFile
+public class EmissionsForecastJsonFile
 {
     public DateTimeOffset GeneratedAt { get; set; } = DateTimeOffset.Now;
     public List<EmissionsDataRaw> Emissions { get; set; } = new();
 }
-internal record EmissionsDataRaw
+public record EmissionsDataRaw
 {
     public DateTimeOffset Time { get; set; }
     public double Rating { get; set; }

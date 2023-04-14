@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CarbonAwareComputing.ForecastDownloader": {
+      "commandName": "Project",
+      "commandLineArgs": "--output-file \"C:\\Users\\MirMohammadi\\Projekte\\bluehands Carbon Aware Computing\\tools\\forecast.csv\""
+    }
+  }
+}

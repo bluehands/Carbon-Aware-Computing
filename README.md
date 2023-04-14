@@ -102,6 +102,24 @@ The unofficial Carbon Aware SDK is available form [nuget.org](https://www.nuget.
 Install-Package GSF.CarbonAware.Unofficial
 ```
 
+## PowerShell Cmdlets
+
+There is a PowerShell Cmdlets to forecast the best execution time. You may use this Cmdlets in automation scripts to execute tasks with carbon awareness. See the [GitHub Repository](https://github.com/bluehands/Carbon-Aware-Computing-Cmdlets) for more details.
+
+### Installation
+
+``` powershell
+Install-Module -Name CarbonAwareComputing.Cmdlets
+```
+### Usage
+
+``` powershell
+$now=get-date
+Get-CarbonAwareExecutionTime -Location at -EarliestExecutionTime $now -LatestExecutionTime ($now).AddHours(10) -EstimatedExecutionDuration "00:10:00"
+```
+
+Set the *FallbackExecutionTime* Parameter to set the execution time when no forecast is available. This command is designed to be used in scripts, therefor no errors are thrown.
+
 ## Data
 
 The forecast data is gathered from [Energy Charts](https://www.energy-charts.info/) provided by [Frauenhofer ISE](https://www.ise.fraunhofer.de/). It is licensed as CC 0 <https://creativecommons.org/publicdomain/zero/1.0/>. You may use it for any purpose without any credits.

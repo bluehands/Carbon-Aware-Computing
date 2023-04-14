@@ -7,21 +7,14 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using CarbonAwareComputing.ExecutionForecast;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
 using FunicularSwitch;
-using static System.Net.WebRequestMethods;
-using HandlebarsDotNet;
-using System.Net.Mail;
 using Azure.Identity;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
-using BodyType = WireMock.Types.BodyType;
-using Message = Microsoft.Azure.ServiceBus.Message;
 
 // ReSharper disable StringLiteralTypo
 // ReSharper disable ConvertClosureToMethodGroup

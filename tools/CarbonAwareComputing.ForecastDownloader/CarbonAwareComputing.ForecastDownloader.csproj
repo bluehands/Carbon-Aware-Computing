@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="CsvHelper" Version="30.0.1" />
+		<PackageReference Include="Dynamitey" Version="2.0.10.189" />
+		<PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.22272.1" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\src\CarbonAwareComputing.ExecutionForecast\CarbonAwareComputing.ExecutionForecast.csproj" />
+	</ItemGroup>
+</Project>

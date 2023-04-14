@@ -1,9 +1,7 @@
-﻿using Azure.Data.Tables.Models;
-using Azure.Identity;
+﻿using Azure.Identity;
 using Azure.Storage.Blobs;
 using CarbonAwareComputing.ExecutionForecast;
 using FunicularSwitch;
-using WireMock.Org.Abstractions;
 
 namespace CarbonAwareComputing.ForecastUpdater;
 

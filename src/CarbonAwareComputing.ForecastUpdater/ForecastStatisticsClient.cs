@@ -4,7 +4,6 @@ using Azure.Identity;
 using CarbonAware.Model;
 using CarbonAwareComputing.ExecutionForecast;
 using FunicularSwitch;
-using static CarbonAwareComputing.ForecastUpdater.ForecastStatisticsClient;
 
 namespace CarbonAwareComputing.ForecastUpdater;
 
