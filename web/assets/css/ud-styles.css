@@ -679,7 +679,7 @@ p {
 
 .ud-section-title {
   max-width: 790px;
-  margin-bottom: 70px;
+  margin-bottom: 30px;
 }
 
 .ud-section-title span {
@@ -819,6 +819,9 @@ p {
 .ud-about-content-wrapper {
   padding: 70px;
 }
+.ud-projects-content-wrapper {
+  padding: 0px 0px 30px 0px;
+}
 
 @media (max-width: 767px) {
   .ud-about-content-wrapper {
@@ -834,6 +837,10 @@ p {
 
 .ud-about-content {
   max-width: 500px;
+}
+
+.ud-projects-content {
+  xmax-width: 900px;
 }
 
 .ud-about-content .tag {
@@ -1474,7 +1481,7 @@ p {
 
 /* ===== Footer CSS ===== */
 .ud-footer {
-  background: var(--heading-color);
+  background: var(--primary-color);
   xpadding-top: 100px;
   position: relative;
   z-index: 1;
