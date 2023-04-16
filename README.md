@@ -109,7 +109,7 @@ There is a PowerShell Cmdlets to forecast the best execution time. You may use t
 ### Installation
 
 ``` powershell
-Install-Module -Name CarbonAwareComputing.Cmdlets
+Install-Module -Name CarbonAwareComputing
 ```
 ### Usage
 
