@@ -10,12 +10,19 @@
 /*===========================
   COMMON css 
 ===========================*/
+
+/*
+f3f4fe -- Original
+00243A
+--secondary-color: rgba(0,36,58,0.2);
+*/
 @import url("css2.css");
 :root {
   --font: "Inter", sans-serif;
   --body-color: #637381;
   --heading-color: #009bb4;
-  --primary-color: #00243a;
+  --primary-color: #00243a;  
+  --secondary-color: #f3f4fe;
   --white: #ffffff;
 }
 
@@ -789,7 +796,8 @@ p {
 
 /* ===== About CSS ===== */
 .ud-about {
-  background: #f3f4fe;
+  background: var(--secondary-color);
+  
   padding: 120px 0;
 }
 
@@ -1017,7 +1025,7 @@ p {
 .ud-faq {
   padding-top: 0px;
   padding-bottom: 60px;
-  background: #f3f4fe;
+  background: var(--secondary-color);
   position: relative;
   z-index: 1;
 }
@@ -1038,7 +1046,7 @@ p {
 
 .ud-single-faq {
   background: var(--white);
-  border: 1px solid #f3f4fe;
+  border: 1px solid var(--secondary-color);
   -webkit-box-shadow: 0px 20px 95px rgba(201, 203, 204, 0.3);
           box-shadow: 0px 20px 95px rgba(201, 203, 204, 0.3);
   border-radius: 10px;
@@ -1345,7 +1353,7 @@ p {
   top: 0;
   left: 0;
   height: 50%;
-  background: #f3f4fe;
+  background: var(--secondary-color);
 }
 
 @media only screen and (min-width: 992px) and (max-width: 1199px) {
@@ -1488,6 +1496,8 @@ p {
   overflow: hidden;
 }
 
+
+
 .ud-footer .shape {
   position: absolute;
   z-index: -1;
@@ -1525,7 +1535,7 @@ p {
 .ud-widget .ud-widget-desc {
   font-size: 15px;
   line-height: 24px;
-  color: #f3f4fe;
+  color: var(--secondary-color);
   margin-bottom: 30px;
   max-width: 260px;
 }
@@ -1561,7 +1571,7 @@ p {
   margin-bottom: 12px;
   font-size: 15px;
   line-height: 30px;
-  color: #f3f4fe;
+  color: var(--secondary-color);
 }
 
 .ud-widget .ud-widget-links a:hover {
@@ -1598,6 +1608,8 @@ p {
   border-top: 1px solid rgba(136, 144, 164, 0.43);
 }
 
+
+
 .ud-footer-bottom .ud-footer-bottom-left {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -1605,6 +1617,9 @@ p {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+}
+.ud-footer-bottom .ud-footer-bottom-left a:hover {
+  color: white;
 }
 
 @media (max-width: 767px) {
@@ -1618,7 +1633,7 @@ p {
 .ud-footer-bottom .ud-footer-bottom-left a {
   font-weight: normal;
   font-size: 15px;
-  color: #f3f4fe;
+  color: var(--secondary-color);
   margin-right: 30px;
   display: inline-block;
 }
@@ -1637,7 +1652,7 @@ p {
   text-align: right;
   font-weight: normal;
   font-size: 15px;
-  color: #f3f4fe;
+  color: var(--secondary-color);
 }
 
 .ud-footer-bottom .ud-footer-bottom-right a {
