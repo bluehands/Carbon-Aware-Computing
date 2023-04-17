@@ -29,11 +29,11 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     public class EmissionForecastFunction
     {
         private readonly IOptions<ApplicationSettings> m_ApplicationSettings;
-        private readonly CarbonAwareDataProviderOpenData m_Provider;
+        private readonly CarbonAwareDataProvider m_Provider;
 
         public EmissionForecastFunction(
             IOptions<ApplicationSettings> applicationSettings,
-            CarbonAwareDataProviderOpenData provider
+            CarbonAwareDataProvider provider
             )
         {
             m_ApplicationSettings = applicationSettings;
