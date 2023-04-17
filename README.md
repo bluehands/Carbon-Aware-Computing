@@ -148,6 +148,10 @@ The forecast data is based on reported energy production (current) and forecast 
 
 In future *Energy Charts* will provide mid term forecast based on weather forecast and own calculations as well.
 
+### Fallback
+
+For regions we not support (e.g. US, Asia), a **WattTime**-DataProvider is implemented. For that you must provide your WattTime Credentials.
+
 ## Contribution
 
 Every contribution is warmly welcome. You may contribute to forecast data for other regions than Europe or help to integrate time-shifting in popular processing systems and libraries. Migration to other programming languages and runtime systems is very efficacious as well.
