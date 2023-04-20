@@ -27,6 +27,7 @@ Install-Package CarbonAwareComputing.ExecutionForecast
 Instantiate a *CarbonAwareDataProvider* and call *CalculateBestExecutionTime*
 
 ``` csharp
+// Hold the provider as singleton. The forecast data is cached
 var provider = new CarbonAwareDataProviderOpenData();
 var forecast = provider.CalculateBestExecutionTime(
     ComputingLocations.Germany,
