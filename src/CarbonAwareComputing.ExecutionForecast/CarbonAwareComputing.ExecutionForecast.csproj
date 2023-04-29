@@ -5,13 +5,14 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>CarbonAwareComputing.ExecutionForecast</PackageId>
-		<Version>1.1.1</Version>
+		<Version>1.1.2</Version>
 		<PackageTags>Carbon Aware, Green Software, Forecast</PackageTags>
 		<Authors>Implemented with 💙 by bluehands</Authors>
 		<Company>bluehands GmbH &amp; Co.mmunication KG</Company>
 		<PackageTags>bluehands</PackageTags>
 		<Title>Carbon Aware Computing - Execution forcast</Title>
 		<RepositoryUrl>https://github.com/bluehands/Carbon-Aware-Computing.git</RepositoryUrl>
+		<PackageProjectUrl>https://www.carbon-aware-computing.com/</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Description>
