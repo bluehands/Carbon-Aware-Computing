@@ -20,8 +20,12 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Primitives;
 using System.Web.Http;
 using Azure.Identity;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Abstractions;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Resolvers;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
+using Microsoft.OpenApi.Any;
+using Newtonsoft.Json.Serialization;
 
 
 namespace CarbonAwareComputing.ExecutionForecast.Function
@@ -88,12 +92,12 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         }
 
         [OpenApiOperation(operationId: "GetBestExecutionTime", tags: new[] { "forecast" }, Summary = "Get the best execution time with minimal grid carbon intensity", Description = "Get the best execution time with minimal grid carbon intensity. A time intervall of the given duration within the earliest and latest execution time with the most renewable energy in the power grid of the location", Visibility = OpenApiVisibilityType.Important)]
-        [OpenApiParameter(name: "location", In = ParameterLocation.Query, Required = true, Type = typeof(string[]), Description = "String array of named locations")]
-        [OpenApiParameter(name: "dataStartAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Description = "Start time boundary of forecasted data points. Ignores current forecast data points before this time. Defaults to the earliest time in the forecast data.")]
-        [OpenApiParameter(name: "dataEndAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Description = "End time boundary of forecasted data points. Ignores current forecast data points after this time. Defaults to the latest time in the forecast data.")]
-        [OpenApiParameter(name: "windowSize", In = ParameterLocation.Query, Required = false, Type = typeof(int), Description = "The estimated duration (in minutes) of the workload. Defaults to 5 Minutes (This is different from GSF SDK which default to the duration of a single forecast data point).")]
+        [OpenApiParameter(name: "location", In = ParameterLocation.Query, Required = true, Type = typeof(string), Example = typeof(LocationExample), Description = "Comma seperated list of named locations")]
+        [OpenApiParameter(name: "dataStartAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataStartAtExample), Description = "Start time boundary of forecasted data points. Ignores current forecast data points before this time. Defaults to the earliest time in the forecast data.")]
+        [OpenApiParameter(name: "dataEndAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataEndAtExample), Description = "End time boundary of forecasted data points. Ignores current forecast data points after this time. Defaults to the latest time in the forecast data.")]
+        [OpenApiParameter(name: "windowSize", In = ParameterLocation.Query, Required = false, Type = typeof(int), Example = typeof(WindowSizeExample), Description = "The estimated duration (in minutes) of the workload. Defaults to 5 Minutes (This is different from GSF SDK which default to the duration of a single forecast data point).")]
         [OpenApiSecurity("apikey", SecuritySchemeType.ApiKey, In = OpenApiSecurityLocationType.Header, Name = "x-api-key")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(EmissionsForecast), Summary = "Forecast available. Operation succeeded", Description = "Forecast data is available and the best execution time is provided. Tis is a subset of the GSF SDK data. No infoormation on the underlying forecast data ist provided. E.g. no forecast boundaries, no forcast data, no forecast generation date")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(IEnumerable<EmissionsForecast>), Summary = "Forecast available. Operation succeeded", Description = "Forecast data is available and the best execution time is provided. Tis is a subset of the GSF SDK data. No infoormation on the underlying forecast data ist provided. E.g. no forecast boundaries, no forcast data, no forecast generation date")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.NotFound, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "Forecast is not available for the location or time window. Operation failed", Description = "Forecast is not available for the location or time window. Operation failed")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "failed operation", Description = "failed operation")]
         [FunctionName("GetBestExecutionTime")]
@@ -156,8 +160,11 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                 var forecasts = new List<EmissionsForecast>();
                 foreach (var l in location.First().Split(','))
                 {
-                    var computingLocation = new ComputingLocation(l.Trim());
-                    var best = await m_Provider.CalculateBestExecutionTime(computingLocation, dataStartAt, dataEndAt, TimeSpan.FromMinutes(windowSize));
+                    if (!ComputingLocations.TryParse(l.Trim(), out var computingLocation))
+                    {
+                        continue;
+                    }
+                    var best = await m_Provider.CalculateBestExecutionTime(computingLocation!, dataStartAt, dataEndAt, TimeSpan.FromMinutes(windowSize));
                     if (best is ExecutionTime.BestExecutionTime_ bestExecutionTime)
                     {
                         forecasts.Add(new EmissionsForecast
@@ -199,7 +206,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
             HttpRequest req,
             ILogger log)
         {
-            return new OkObjectResult(ComputingLocations.All.Select(c => new AvailableLocation(c.Name, c.IsActive)));
+            return new OkObjectResult(ComputingLocations.All.Select(c => new AvailableLocation(c)));
         }
         private async Task<bool> SendApiKeyAsync(ILogger log, string mailAddress, string apiKey, string template)
         {
@@ -270,7 +277,64 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         }
     }
 
-    public record AvailableLocation(string LocationName, bool Active);
+    public class LocationExample : OpenApiExample<string>
+    {
+        public override IOpenApiExample<string> Build(NamingStrategy namingStrategy = null)
+        {
+            Examples.Add(OpenApiExampleResolver.Resolve("Germany", "de", namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("Austria and France", "at,fr", namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("Azure francecentral", "francecentral", namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("AWS eu-west-3", "eu-west-3", namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("GCP europe-west9", "europe-west9", namingStrategy));
+            return this;
+        }
+    }
+    public class DataStartAtExample : OpenApiExample<DateTimeOffset?>
+    {
+        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
+        {
+            Examples.Add(OpenApiExampleResolver.Resolve("Now", DateTimeOffset.Now, namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("In one hour", DateTimeOffset.Now.AddHours(1), namingStrategy));
+            return this;
+        }
+    }
+    public class DataEndAtExample : OpenApiExample<DateTimeOffset?>
+    {
+        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
+        {
+            Examples.Add(OpenApiExampleResolver.Resolve("In five hours", DateTimeOffset.Now.AddHours(1), namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("In ten hours", DateTimeOffset.Now.AddHours(10), namingStrategy));
+            return this;
+        }
+    }
+    public class WindowSizeExample : OpenApiExample<int?>
+    {
+        public override IOpenApiExample<int?> Build(NamingStrategy namingStrategy = null)
+        {
+            Examples.Add(OpenApiExampleResolver.Resolve("10 Minutes", 10, namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("One hour", 60, namingStrategy));
+            return this;
+        }
+    }
+
+    public class AvailableLocation
+    {
+        public string Name { get; }
+        public bool IsActive { get; }
+        public AvailableLocation(ComputingLocation location)
+        {
+            if (location is CloudRegion cloudRegion)
+            {
+                Name = cloudRegion.Region;
+                IsActive = cloudRegion.IsActive;
+            }
+            else
+            {
+                Name = location.Name;
+                IsActive = location.IsActive;
+            }
+        }
+    }
 
     public record RegistrationData(string MailAddress);
 
