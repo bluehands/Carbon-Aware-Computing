@@ -336,13 +336,13 @@ Install-Module -Name CarbonAwareComputing
                     <br/>
                     <p>
                       <pre><code>
-Install-Package Hangfire.CarbonAwareExecution
+Install-Package CarbonAwareComputing.Hangfire
                       </code></pre>
                     </p>
                     <p>
                       <pre><code>
-builder.Services.AddHangfire(configuration => configuration.
-  UseCarbonAwareExecution(
+builder.Services.AddHangfireCarbonAwareExecution(configuration => configuration.
+UseCarbonAwareDataProvider(
     new CarbonAwareDataProviderOpenData(), 
     ComputingLocations.Germany));                    
                       </code></pre>
