@@ -58,10 +58,10 @@ Hangfire is one of the most used tools for background processing in .NET. Use th
 
 ### Installation
 
-HangfireCarbonAwareExecution is available as a NuGet package. You can install it using the NuGet-Package Console window:
+Hangfire.Community.CarbonAwareExecution is available as a NuGet package. You can install it using the NuGet-Package Console window:
 
 ``` powershell
-Install-Package CarbonAwareComputing.Hangfire
+Install-Package Hangfire.Community.CarbonAwareExecution
 ```
 
 After installation add the extension to the Hangfire configuration.
