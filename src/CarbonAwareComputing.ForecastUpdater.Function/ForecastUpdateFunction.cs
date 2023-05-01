@@ -68,7 +68,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
             var energyChartsClient = GetEnergyChartsClient();
             var cachedForecastClient = new CachedForecastClient("carbonawarecomputing", "forecasts");
             var forecastStatisticsClient = new ForecastStatisticsClient("carbonawarecomputing", "forecasts");
-            foreach (var computingLocation in ComputingLocations.All.Where(l => l.IsActive))
+            foreach (var computingLocation in ComputingLocations.All.Where(l => l.IsActive).DistinctBy(l => l.Name))
             {
                 await energyChartsClient.GetForecastAsync(computingLocation.Name).Bind(
                     energyChartsRoot => EnergyChartsTransform.ImportForecast(energyChartsRoot, computingLocation.Name)).Bind(
