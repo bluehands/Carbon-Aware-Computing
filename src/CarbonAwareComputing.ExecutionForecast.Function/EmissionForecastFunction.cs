@@ -92,7 +92,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         }
 
         [OpenApiOperation(operationId: "GetBestExecutionTime", tags: new[] { "forecast" }, Summary = "Get the best execution time with minimal grid carbon intensity", Description = "Get the best execution time with minimal grid carbon intensity. A time intervall of the given duration within the earliest and latest execution time with the most renewable energy in the power grid of the location", Visibility = OpenApiVisibilityType.Important)]
-        [OpenApiParameter(name: "location", In = ParameterLocation.Query, Required = true, Type = typeof(string), Example = typeof(LocationExample), Description = "Comma seperated list of named locations")]
+        [OpenApiParameter(name: "location", In = ParameterLocation.Query, Required = true, Type = typeof(IEnumerable<string>), Example = typeof(LocationExample), Description = "Comma seperated list of named locations (de,fr) or multiple location (location=fr & location=de) ")]
         [OpenApiParameter(name: "dataStartAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataStartAtExample), Description = "Start time boundary of forecasted data points. Ignores current forecast data points before this time. Defaults to the earliest time in the forecast data.")]
         [OpenApiParameter(name: "dataEndAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataEndAtExample), Description = "End time boundary of forecasted data points. Ignores current forecast data points after this time. Defaults to the latest time in the forecast data.")]
         [OpenApiParameter(name: "windowSize", In = ParameterLocation.Query, Required = false, Type = typeof(int), Example = typeof(WindowSizeExample), Description = "The estimated duration (in minutes) of the workload. Defaults to 5 Minutes (This is different from GSF SDK which default to the duration of a single forecast data point).")]
@@ -293,8 +293,8 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     {
         public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
         {
-            Examples.Add(OpenApiExampleResolver.Resolve("Now", DateTimeOffset.Now, namingStrategy));
-            Examples.Add(OpenApiExampleResolver.Resolve("In one hour", DateTimeOffset.Now.AddHours(1), namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("Now", DateTimeOffset.Now.PadSeconds(), namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("In one hour", DateTimeOffset.Now.AddHours(1).PadSeconds(), namingStrategy));
             return this;
         }
     }
@@ -302,8 +302,8 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     {
         public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
         {
-            Examples.Add(OpenApiExampleResolver.Resolve("In five hours", DateTimeOffset.Now.AddHours(1), namingStrategy));
-            Examples.Add(OpenApiExampleResolver.Resolve("In ten hours", DateTimeOffset.Now.AddHours(10), namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("In five hours", DateTimeOffset.Now.AddHours(1).PadSeconds(), namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("In ten hours", DateTimeOffset.Now.AddHours(10).PadSeconds(), namingStrategy));
             return this;
         }
     }
@@ -317,6 +317,13 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         }
     }
 
+    public static class DateTimeOffsetExtension
+    {
+        public static DateTimeOffset PadSeconds(this DateTimeOffset date)
+        {
+            return new DateTimeOffset(date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second,date.Offset);
+        }
+    }
     public class AvailableLocation
     {
         public string Name { get; }
