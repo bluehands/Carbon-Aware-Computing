@@ -123,7 +123,9 @@ Set the *FallbackExecutionTime* Parameter to set the execution time when no fore
 
 ## Data
 
-The forecast data is gathered from [Energy Charts](https://www.energy-charts.info/) provided by [Frauenhofer ISE](https://www.ise.fraunhofer.de/). It is licensed as CC 0 <https://creativecommons.org/publicdomain/zero/1.0/>. You may use it for any purpose without any credits.
+The forecast data for Europe (without UK) is gathered from [Energy Charts](https://www.energy-charts.info/) provided by [Frauenhofer ISE](https://www.ise.fraunhofer.de/). It is licensed as CC 0 <https://creativecommons.org/publicdomain/zero/1.0/>. You may use it for any purpose without any credits.
+
+The forecast data for United Kingdom is gathered from [UK National Grid ESO](https://carbonintensity.org.uk/). It is licensed as [CC BY 4.0 DEED](https://creativecommons.org/licenses/by/4.0/). See [terms of usage](https://github.com/carbon-intensity/terms/).
 
 ### Download
 
@@ -137,7 +139,7 @@ Replace the {LOCATION} with one of the supported locations two letter country co
 
 ### Available and supported locations
 
-We support the most countries in Europe, but not all are active. For computing efficiency we start with a Germany, France, Austria and Switzerland. If you have a need for some other countries please contact us. We will activate that country. To get a list of all locations see the *locations* endpoint of the API. Every location has a IsActive-Flag. 
+We support the most countries in Europe, but not all are active. For computing efficiency we start with a Germany, France, Austria, Switzerland and the United Kingdom. If you have a need for some other countries please contact us. We will activate that country. To get a list of all locations see the *locations* endpoint of the API. Every location has a IsActive-Flag. 
 
 ``` powershell
 curl -X GET "https://forecast.carbon-aware-computing.com/locations" -H  "accept: application/json"
@@ -145,7 +147,7 @@ curl -X GET "https://forecast.carbon-aware-computing.com/locations" -H  "accept:
 
 ### Methodology
 
-The forecast data is based on reported energy production (current) and forecast production for Wind (on-shore & off-shore) and Solar. This information's are send to the ENTSO-E Transparency Platform by the power grid Transmission System Operators (TSO). For the additional renewable energy sources like running water, bio mass the forecast is calculated as an interpolation of the last hours. After that the share of renewable energy is calculated as the quotient of generated renewable energy to all generated energy. This forecast is very accurate because it is used by the TSO to manage the power grid. The data is recalculated every hour by *Energy Charts*. The forecast for next day is available at 19:00+02.
+The forecast data for Europe (without UK) is based on reported energy production (current) and forecast production for Wind (on-shore & off-shore) and Solar. This information's are send to the ENTSO-E Transparency Platform by the power grid Transmission System Operators (TSO). For the additional renewable energy sources like running water, bio mass the forecast is calculated as an interpolation of the last hours. After that the share of renewable energy is calculated as the quotient of generated renewable energy to all generated energy. This forecast is very accurate because it is used by the TSO to manage the power grid. The data is recalculated every hour by *Energy Charts*. The forecast for next day is available at 19:00+02.
 
 In future *Energy Charts* will provide mid term forecast based on weather forecast and own calculations as well.
 
