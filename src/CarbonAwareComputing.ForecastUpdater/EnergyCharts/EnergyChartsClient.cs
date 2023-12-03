@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using FunicularSwitch;
 
-namespace CarbonAwareComputing.ForecastUpdater;
+namespace CarbonAwareComputing.ForecastUpdater.EnergyCharts;
 
 public class EnergyChartsClient
 {

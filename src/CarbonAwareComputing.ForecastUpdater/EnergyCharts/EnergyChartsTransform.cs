@@ -1,8 +1,28 @@
 ﻿using CarbonAware.Model;
 using FunicularSwitch;
 
-namespace CarbonAwareComputing.ForecastUpdater;
+namespace CarbonAwareComputing.ForecastUpdater.EnergyCharts;
 
+public static class Transform
+{
+    public static Result<string> Serialize(EmissionsForecast forecast)
+    {
+        try
+        {
+            var jsonFile = new EmissionsForecastJsonFile()
+            {
+                GeneratedAt = forecast.GeneratedAt,
+                Emissions = forecast.ForecastData.Select(d => new EmissionsDataRaw { Time = d.Time, Rating = d.Rating, Duration = d.Duration }).ToList()
+            };
+            var json = System.Text.Json.JsonSerializer.Serialize(jsonFile);
+            return json;
+        }
+        catch (Exception ex)
+        {
+            return Result.Error<string>(ex.Message);
+        }
+    }
+}
 public static class EnergyChartsTransform
 {
     public static Result<EmissionsForecast> ImportForecast(List<EnergyChartRoot> roots, string country)
@@ -82,25 +102,4 @@ public static class EnergyChartsTransform
 
         return timeAxis;
     }
-
-    public static Result<string> Serialize(EmissionsForecast forecast)
-    {
-        try
-        {
-            var jsonFile = new EmissionsForecastJsonFile()
-            {
-                GeneratedAt = forecast.GeneratedAt,
-                Emissions = forecast.ForecastData.Select(d => new EmissionsDataRaw { Time = d.Time, Rating = d.Rating, Duration = d.Duration }).ToList()
-            };
-            var json = System.Text.Json.JsonSerializer.Serialize(jsonFile);
-            return json;
-        }
-        catch (Exception ex)
-        {
-            return Result.Error<string>(ex.Message);
-        }
-    }
-
-
 }
-

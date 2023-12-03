@@ -6,7 +6,7 @@
     <UserSecretsId>a0dbe6a0-f759-49d0-bfb3-9fc6287d2ab3</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.8.2" />
+    <PackageReference Include="Azure.Identity" Version="1.10.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
     <PackageReference Include="Microsoft.Graph" Version="4.50.0" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.1.3" />

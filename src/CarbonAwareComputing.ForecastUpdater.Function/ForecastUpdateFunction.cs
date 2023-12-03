@@ -15,6 +15,8 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph;
+using CarbonAwareComputing.ForecastUpdater.EnergyCharts;
+using CarbonAwareComputing.ForecastUpdater.UKNationalGrid;
 
 // ReSharper disable StringLiteralTypo
 // ReSharper disable ConvertClosureToMethodGroup
@@ -65,15 +67,21 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
 
         private async Task UpdateForecast(ILogger log)
         {
+            await UpdateEnergyChartsForecast(log);
+            await UpdateUKNationalGridForecast(log);
+        }
+
+        private async Task UpdateEnergyChartsForecast(ILogger log)
+        {
             var energyChartsClient = GetEnergyChartsClient();
             var cachedForecastClient = new CachedForecastClient("carbonawarecomputing", "forecasts");
             var forecastStatisticsClient = new ForecastStatisticsClient("carbonawarecomputing", "forecasts");
-            foreach (var computingLocation in ComputingLocations.All.Where(l => l.IsActive).DistinctBy(l => l.Name))
+            foreach (var computingLocation in ComputingLocations.All.Where(l => l.IsActive && l.ForecastProvider == ForecastProvider.EnergyCharts).DistinctBy(l => l.Name))
             {
                 await energyChartsClient.GetForecastAsync(computingLocation.Name).Bind(
                     energyChartsRoot => EnergyChartsTransform.ImportForecast(energyChartsRoot, computingLocation.Name)).Bind(
                     emissionsForecast => forecastStatisticsClient.UpdateForecastData(computingLocation, emissionsForecast)).Bind(
-                    emissionsForecast => EnergyChartsTransform.Serialize(emissionsForecast)).Bind(
+                    emissionsForecast => Transform.Serialize(emissionsForecast)).Bind(
                     json => cachedForecastClient.UpdateForecastData(computingLocation, json)
                 ).Match(
                     o => No.Thing,
@@ -82,7 +90,30 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
                         log.LogError(e);
                         return No.Thing;
                     }
-                    );
+                );
+            }
+        }
+        private async Task UpdateUKNationalGridForecast(ILogger log)
+        {
+            var ukNationalGridClient = GetUKNationalGridClient();
+            var cachedForecastClient = new CachedForecastClient("carbonawarecomputing", "forecasts");
+            var forecastStatisticsClient = new ForecastStatisticsClient("carbonawarecomputing", "forecasts");
+            foreach (var computingLocation in ComputingLocations.All.Where(l => l.IsActive && l.ForecastProvider == ForecastProvider.UKNationalGrid).DistinctBy(l => l.Name))
+            {
+                var ukNationalGridRegion = ConvertToUKNationalGridRegion(computingLocation.Name);
+                await ukNationalGridClient.GetForecastAsync(ukNationalGridRegion).Bind(
+                    ukNationalGridRoot => UKNationalGridTransform.ImportForecast(ukNationalGridRoot, ukNationalGridRegion)).Bind(
+                    emissionsForecast => forecastStatisticsClient.UpdateForecastData(computingLocation, emissionsForecast)).Bind(
+                    emissionsForecast => Transform.Serialize(emissionsForecast)).Bind(
+                    json => cachedForecastClient.UpdateForecastData(computingLocation, json)
+                ).Match(
+                    o => No.Thing,
+                    e =>
+                    {
+                        log.LogError(e);
+                        return No.Thing;
+                    }
+                );
             }
         }
 
@@ -131,6 +162,21 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
             });
             return client;
         }
+        private UKNationalGridClient GetUKNationalGridClient()
+        {
+            var client = new UKNationalGridClient(async u =>
+            {
+                try
+                {
+                    return await m_Http.GetStringAsync(u);
+                }
+                catch (Exception ex)
+                {
+                    return Result.Error<string>(ex.Message);
+                }
+            });
+            return client;
+        }
         private async Task<bool> SendStatisticsAsync(ILogger log, string mailAddress, string statistics, string template)
         {
             var tenantId = m_ApplicationSettings.Value.TenantId;
@@ -140,12 +186,12 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
             var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
             var graphClient = new GraphServiceClient(credential);
 
-            Microsoft.Graph.Message message = new()
+            Message message = new()
             {
                 Subject = "Statistics for Carbon Aware Computing Execution Forecast ",
                 Body = new ItemBody
                 {
-                    ContentType = Microsoft.Graph.BodyType.Text,
+                    ContentType = BodyType.Text,
                     Content = template.Replace("{{STATISTICS}}", statistics)
                 },
                 ToRecipients = new List<Recipient>()
@@ -175,6 +221,23 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
                 log.LogError($"Could not send mail to {mailAddress}. Error: {ex.Message}");
                 return false;
             }
+        }
+        private Option<UKRegions> ConvertToUKNationalGridRegion(string computingLocationName)
+        {
+            if (ComputingLocations.TryParse(computingLocationName, out var computingLocation) && computingLocation!.ForecastProvider == ForecastProvider.UKNationalGrid)
+            {
+                var name = computingLocation.Name.ToLowerInvariant();
+                if (name == "uk")
+                {
+                    return Option<UKRegions>.None;
+                }
+
+                if (Enum.TryParse<UKRegions>(name, true, out var region))
+                {
+                    return region;
+                }
+            }
+            return Option<UKRegions>.None;
         }
     }
 }

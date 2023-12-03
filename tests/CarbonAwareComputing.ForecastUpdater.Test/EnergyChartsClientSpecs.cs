@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using CarbonAware.Model;
+using CarbonAwareComputing.ForecastUpdater.EnergyCharts;
 using FunicularSwitch;
 // ReSharper disable InconsistentNaming
 

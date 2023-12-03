@@ -99,5 +99,25 @@ namespace CarbonAwareComputing.ForecastUpdater.Test.Properties {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Byte[].
+        /// </summary>
+        internal static byte[] london {
+            get {
+                object obj = ResourceManager.GetObject("london", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Byte[].
+        /// </summary>
+        internal static byte[] uk {
+            get {
+                object obj = ResourceManager.GetObject("uk", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }

@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>CarbonAwareComputing.ExecutionForecast</PackageId>
-		<Version>1.1.2</Version>
+		<Version>1.1.3</Version>
 		<PackageTags>Carbon Aware, Green Software, Forecast</PackageTags>
 		<Authors>Implemented with 💙 by bluehands</Authors>
 		<Company>bluehands GmbH &amp; Co.mmunication KG</Company>
