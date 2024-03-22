@@ -124,8 +124,8 @@
   <data name="ch" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\assets\ch.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="de_no_forecast" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\assets\de_no_forecast.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="de_co2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\assets\de_co2.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="fr" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\assets\fr.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

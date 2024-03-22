@@ -78,7 +78,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
             var forecastStatisticsClient = new ForecastStatisticsClient("carbonawarecomputing", "forecasts");
             foreach (var computingLocation in ComputingLocations.All.Where(l => l.IsActive && l.ForecastProvider == ForecastProvider.EnergyCharts).DistinctBy(l => l.Name))
             {
-                await energyChartsClient.GetForecastAsync(computingLocation.Name).Bind(
+                await energyChartsClient.GetCarbonGridIntensityForecastAsync(computingLocation.Name).Bind(
                     energyChartsRoot => EnergyChartsTransform.ImportForecast(energyChartsRoot, computingLocation.Name)).Bind(
                     emissionsForecast => forecastStatisticsClient.UpdateForecastData(computingLocation, emissionsForecast)).Bind(
                     emissionsForecast => Transform.Serialize(emissionsForecast)).Bind(

@@ -83,9 +83,9 @@ namespace CarbonAwareComputing.ForecastUpdater.Test.Properties {
         /// <summary>
         ///   Sucht eine lokalisierte Ressource vom Typ System.Byte[].
         /// </summary>
-        internal static byte[] de_no_forecast {
+        internal static byte[] de_co2 {
             get {
-                object obj = ResourceManager.GetObject("de_no_forecast", resourceCulture);
+                object obj = ResourceManager.GetObject("de_co2", resourceCulture);
                 return ((byte[])(obj));
             }
         }
