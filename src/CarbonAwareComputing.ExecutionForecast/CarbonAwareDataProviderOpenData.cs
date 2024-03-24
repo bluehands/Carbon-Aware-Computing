@@ -18,7 +18,16 @@ namespace CarbonAwareComputing.ExecutionForecast;
 public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
 {
     private static readonly HttpClient httpClient = new HttpClient();
+    private readonly string m_ForecastDataEndpointTemplate;
 
+    public CarbonAwareDataProviderOpenData()
+    {
+        m_ForecastDataEndpointTemplate = $"https://carbonawarecomputing.blob.core.windows.net/forecasts/{0}.json";
+    }
+    public CarbonAwareDataProviderOpenData(string forecastDataEndpointTemplate) : base()
+    {
+        m_ForecastDataEndpointTemplate = forecastDataEndpointTemplate;
+    }
     protected override async Task<CachedData> FillEmissionsDataCache(ComputingLocation location, CachedData currentCachedData)
     {
         if (DateTimeOffset.Now < currentCachedData.LastUpdate.AddMinutes(5))
@@ -27,7 +36,7 @@ public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
         }
 
         var locationName = location.Name;
-        var uri = new Uri($"https://carbonawarecomputing.blob.core.windows.net/forecasts/{locationName}.json");
+        var uri = new Uri(string.Format(m_ForecastDataEndpointTemplate, locationName));
         httpClient.DefaultRequestHeaders.IfNoneMatch.Clear();
         var eTag = currentCachedData.Version;
         if (string.IsNullOrEmpty(eTag))

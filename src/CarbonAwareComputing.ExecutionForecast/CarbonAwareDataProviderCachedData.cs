@@ -2,7 +2,6 @@
 using CarbonAware.DataSources.Memory;
 using CarbonAware.Model;
 using GSF.CarbonAware.Handlers;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CarbonAwareComputing.ExecutionForecast;
@@ -24,16 +23,15 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
     }
 
     protected IForecastHandler ForecastHandler;
-
+    private readonly EmissionsDataProvider m_DataProvider;
     private readonly ConcurrentDictionary<ComputingLocation, EmissionsForecastDataCache> m_EmissionsForecastData = new();
 
     protected CarbonAwareDataProviderCachedData()
     {
-        var emissionsDataProvider = new EmissionsDataProvider(GetForecastData);
-        var memoryDataSource = new MemoryDataSource(new NullLogger<MemoryDataSource>(), emissionsDataProvider);
+        m_DataProvider = new EmissionsDataProvider(GetForecastData);
+        var memoryDataSource = new MemoryDataSource(new NullLogger<MemoryDataSource>(), m_DataProvider);
         ForecastHandler = new ForecastHandler(new NullLogger<ForecastHandler>(), memoryDataSource);
     }
-
 
     public override async Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset latestExecutionTime, TimeSpan estimatedJobDuration)
     {
@@ -53,6 +51,36 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
         }
 
         return ExecutionTime.BestExecutionTime(best.Time, best.Duration, best.Rating);
+    }
+
+    public override async Task<GridCarbonIntensity> GetCarbonIntensity(ComputingLocation location, DateTimeOffset now)
+    {
+        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, now, now);
+        if (!adjustedForecastBoundary.ForecastIsAvailable)
+        {
+            return GridCarbonIntensity.NoData();
+        }
+
+        var forecastData = await m_DataProvider.GetForecastData(new Location() { Name = location.Name });
+
+
+        for (int i = forecastData.Count - 1; i >= 0; i--)
+        {
+            var f = forecastData[i];
+            if (now >= f.Time)
+            {
+                return GridCarbonIntensity.Intensity(f.Rating);
+            }
+        }
+        return GridCarbonIntensity.NoData();
+
+        var emissionsData = forecastData.FirstOrDefault(e => e.Time >= now);
+        if (emissionsData is null)
+        {
+            return GridCarbonIntensity.NoData();
+        }
+        return GridCarbonIntensity.Intensity(emissionsData.Rating);
+
     }
 
     public Task<List<EmissionsData>> GetForecastData(ComputingLocation location)

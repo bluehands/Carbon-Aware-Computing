@@ -1,22 +1,20 @@
-﻿
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using FunicularSwitch.Generators;
 
 // ReSharper disable InconsistentNaming
-
-
 namespace CarbonAwareComputing.ExecutionForecast;
-
 public abstract class CarbonAwareDataProvider
 {
     public abstract Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset latestExecutionTime, TimeSpan estimatedJobDuration);
-
+    public abstract Task<GridCarbonIntensity> GetCarbonIntensity(ComputingLocation location, DateTimeOffset now);
 }
 
 public abstract class ExecutionTime
 {
     public static readonly ExecutionTime NoForecast = new NoForecast_();
-
     public static ExecutionTime BestExecutionTime(DateTimeOffset bestExecutionTime, TimeSpan duration, double rating) => new BestExecutionTime_(bestExecutionTime, duration, rating);
-
     public class NoForecast_ : ExecutionTime
     {
         public NoForecast_() : base(UnionCases.NoForecast)
@@ -62,6 +60,13 @@ public abstract class ExecutionTime
 
     public override int GetHashCode() => (int)UnionCase;
 }
+
+[UnionType(StaticFactoryMethods = true)]
+public abstract partial record GridCarbonIntensity;
+public record NoData : GridCarbonIntensity;
+public record Intensity(double Value) : GridCarbonIntensity;
+
+
 
 public static class ExecutionTimeExtension
 {

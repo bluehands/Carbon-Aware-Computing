@@ -1,5 +1,8 @@
 ﻿// ReSharper disable InconsistentNaming
 // ReSharper disable StringLiteralTypo
+
+using System.Diagnostics.CodeAnalysis;
+
 namespace CarbonAwareComputing.ExecutionForecast;
 
 public static class ComputingLocations
@@ -117,7 +120,8 @@ public static class ComputingLocations
         new InactiveComputingLocation("Wales",ForecastProvider.UKNationalGrid),
     };
 
-    public static bool TryParse(string name, out ComputingLocation? location)
+
+    public static bool TryParse(string name, [NotNullWhen(true)] out ComputingLocation? location)
     {
         if (Active.TryGetValue(name, out location))
         {
