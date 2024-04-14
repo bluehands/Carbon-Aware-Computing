@@ -349,3 +349,7 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 /tools/forecast.csv
+/src/CarbonAwareComputing.GridCarbonIntensity.Function/Properties/ServiceDependencies/CarbonAwareComputingGridCarbonIntensity - Zip Deploy/appInsights1.arm.json
+/src/CarbonAwareComputing.GridCarbonIntensity.Function/Properties/ServiceDependencies/CarbonAwareComputingGridCarbonIntensity - Zip Deploy/profile.arm.json
+/src/CarbonAwareComputing.GridCarbonIntensity.Function/Properties/ServiceDependencies/CarbonAwareComputingGridCarbonIntensity - Zip Deploy/storage1.arm.json
+/src/CarbonAwareComputing.GridCarbonIntensity.Function/Properties/serviceDependencies.CarbonAwareComputingGridCarbonIntensity - Zip Deploy.json
