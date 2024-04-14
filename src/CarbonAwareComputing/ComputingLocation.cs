@@ -3,7 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace CarbonAwareComputing.ExecutionForecast;
+namespace CarbonAwareComputing;
 
 public static class ComputingLocations
 {

@@ -4,7 +4,6 @@ using CarbonAware.Exceptions;
 using CarbonAware.Interfaces;
 using CarbonAware.Model;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
 namespace CarbonAware.DataSources.WattTime;
 

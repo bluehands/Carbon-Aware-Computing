@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\CarbonAwareComputing\CarbonAwareComputing.csproj" />
     <ProjectReference Include="..\..\src\CarbonAwareComputing.ForecastUpdater\CarbonAwareComputing.ForecastUpdater.csproj" />
   </ItemGroup>
 

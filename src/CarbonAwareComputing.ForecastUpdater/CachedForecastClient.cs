@@ -1,6 +1,5 @@
 ﻿using Azure.Identity;
 using Azure.Storage.Blobs;
-using CarbonAwareComputing.ExecutionForecast;
 using FunicularSwitch;
 
 namespace CarbonAwareComputing.ForecastUpdater;

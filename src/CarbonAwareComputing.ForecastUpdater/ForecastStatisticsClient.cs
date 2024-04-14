@@ -2,7 +2,6 @@
 using Azure.Data.Tables;
 using Azure.Identity;
 using CarbonAware.Model;
-using CarbonAwareComputing.ExecutionForecast;
 using FunicularSwitch;
 
 namespace CarbonAwareComputing.ForecastUpdater;

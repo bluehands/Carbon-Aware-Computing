@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using CarbonAware.DataSources.Memory;
 using CarbonAware.Model;
 
-namespace CarbonAwareComputing.ExecutionForecast;
+namespace CarbonAwareComputing;
 
 public interface ICachedEmissionsDataProvider : IEmissionsDataProvider
 {

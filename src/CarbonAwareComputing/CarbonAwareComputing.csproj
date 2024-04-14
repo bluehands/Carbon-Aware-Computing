@@ -4,19 +4,18 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<PackageId>CarbonAwareComputing.ExecutionForecast</PackageId>
-		<Version>1.1.5</Version>
-		<PackageTags>Carbon Aware, Green Software, Forecast</PackageTags>
+		<PackageId>CarbonAwareComputing</PackageId>
+		<Version>2.0.1</Version>
 		<Authors>Implemented with 💙 by bluehands</Authors>
 		<Company>bluehands GmbH &amp; Co.mmunication KG</Company>
-		<PackageTags>bluehands</PackageTags>
-		<Title>Carbon Aware Computing - Execution forcast</Title>
+		<PackageTags>bluehands; Carbon Aware Computing; Grid Carbon Intensity; Sustainability; Green Software</PackageTags>
+		<Title>Carbon Aware Computing</Title>
 		<RepositoryUrl>https://github.com/bluehands/Carbon-Aware-Computing.git</RepositoryUrl>
 		<PackageProjectUrl>https://www.carbon-aware-computing.com/</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Description>
-			Get the best execution time with with minimal grid carbon intensity for tasks and background jobs.
+			Get the best execution time with with minimal grid carbon intensity for tasks and background jobs. Retrieve the current grid carbon intensity to calculate carbon emissions.
 		</Description>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
@@ -25,6 +24,10 @@
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<!-- Include symbol files (*.pdb) in the built .nupkg -->
 		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+		<PackageReleaseNotes>Add support for actual grid carbon intensity.
+Refactor and rename the package to reflect the new functionality.
+The classes and methods remain compatible to older versions, but moved to new namespace</PackageReleaseNotes>
+		<Copyright>bluehands GmbH &amp; Co.mmunication KG</Copyright>
 	</PropertyGroup>
 
 	<ItemGroup>

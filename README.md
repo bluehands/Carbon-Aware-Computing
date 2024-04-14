@@ -4,22 +4,26 @@
 
 The goal of this project is to provide developers with hassle free, easy to use, ready to run tools for carbon aware computing. All libraries and data are open source and open data with unrestricted usage. Within private, open source and commercial software.
 
-## time-shifting, demand-shifting
+## time-shifting, demand-shifting, grid carbon intensity
 
 The basic idea behind the time-shifting approach is to move the computing load in to a point in time, when the power grid has a maximum of renewable energy. This will result in a lower emission of CO2 of your computing task.
 
-This project will deliver a set of libraries, services and data. There are mostly extensions to other projects and all credits belong to them. To forecast the best execution time the [Carbon Aware SDK](https://github.com/Green-Software-Foundation/carbon-aware-sdk) from the [Green Software Foundation](https://greensoftware.foundation/) is used. The Forecast data is from [Energy Charts](https://www.energy-charts.info/) provided by [Frauenhofer ISE](https://www.ise.fraunhofer.de/).
+This project will deliver a set of libraries, services and data. There are mostly extensions to other projects and all credits belong to them. To forecast the best execution time the [Carbon Aware SDK](https://github.com/Green-Software-Foundation/carbon-aware-sdk) from the [Green Software Foundation](https://greensoftware.foundation/) is used. The Forecast and actual data is from [Energy Charts](https://www.energy-charts.info/) provided by [Frauenhofer ISE](https://www.ise.fraunhofer.de/). For UK the data is provided by [UK National Grid ESO](https://carbonintensity.org.uk/).
 
 ## Get the best execution time as library
 
 Use the NuGet-package for your .NET project to get the best execution time for a task, in a given Execution-Window for a estimated duration. The lib will calculate the optimal execution time within the provided forecast data.
+
+## Get the Grid Carbon Intensity as library
+
+Use the NuGet-package for your .NET project to get the current Grid Carbon Intensity of a given region.
 
 ### Installation
 
 Just add the package to your project.
 
 ``` powershell
-Install-Package CarbonAwareComputing.ExecutionForecast 
+Install-Package CarbonAwareComputing 
 ```
 
 ### Usage
@@ -50,7 +54,26 @@ var executionTime = forecast.Match(
 
 In the above example we will get a optimal execution time for the German Power Grid from now to 8 hours for a task with an estimated duration of 20 minutes. Please have in mind that this a best effort approach. Based on the data or your boundaries a forecast is not available.  
 
-The *CarbonAwareDataProviderOnlineForecastFile* has a cache of all forecasts. To improve performance use it as a singleton, to avoid multiple downloads. For a list of locations see below.
+``` csharp
+// Hold the provider as singleton. The forecast data is cached
+var provider = new CarbonAwareDataProviderOpenData();
+var intensity = provider.GetCarbonIntensity(
+    ComputingLocations.Germany,
+    DateTimeOffset.Now);
+intensity.Match(
+    emissionData =>
+    {
+        Console.WriteLine($"Current grid carbon intensity: {emissionData.Value}");
+    },
+    _ =>
+    {
+        Console.WriteLine($"Data not available);
+    });
+```
+
+In the above example we will get the grid carbon intensity for the German Power Grid for the actual time. Please have in mind that the time range for the intensity is limited. It's mostly for today.  
+
+The *CarbonAwareDataProviderOpenData* has a cache of all forecasts. To improve performance use it as a singleton, to avoid multiple downloads. For a list of locations see below.
 
 ## Hangfire Extension
 
@@ -147,9 +170,7 @@ curl -X GET "https://forecast.carbon-aware-computing.com/locations" -H  "accept:
 
 ### Methodology
 
-The forecast data for Europe (without UK) is based on reported energy production (current) and forecast production for Wind (on-shore & off-shore) and Solar. This information's are send to the ENTSO-E Transparency Platform by the power grid Transmission System Operators (TSO). For the additional renewable energy sources like running water, bio mass the forecast is calculated as an interpolation of the last hours. After that the carbon intensity is calculated by the emission factor for every energy source. This forecast is very accurate because it is used by the TSO to manage the power grid. The data is recalculated every hour by *Energy Charts*. The forecast for next day is available at 19:00+02.
-
-In future *Energy Charts* will provide mid term forecast based on weather forecast and own calculations as well.
+The forecast data for Europe (without UK) is based on reported energy production (current) and forecast production for Wind (on-shore & off-shore) and Solar. This information's are send to the ENTSO-E Transparency Platform by the power grid Transmission System Operators (TSO). For the additional renewable energy sources like running water, bio mass the forecast is calculated as an interpolation of the last hours. After that the carbon intensity is calculated by the emission factor for every energy source. This forecast is very accurate because it is used by the TSO to manage the power grid. The data is recalculated every hour by *Energy Charts*. The forecast for next day is available at 19:00+01.
 
 ### Fallback
 

@@ -9,7 +9,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -17,14 +16,11 @@ using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Primitives;
 using System.Web.Http;
-using Azure.Identity;
+using CarbonAwareComputing.Functions;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Abstractions;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Resolvers;
 using Microsoft.Extensions.Options;
-using Microsoft.Graph;
-using Microsoft.OpenApi.Any;
 using Newtonsoft.Json.Serialization;
 
 
@@ -44,7 +40,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
             m_Provider = provider;
         }
 
-        [OpenApiOperation(operationId: "Register", tags: new[] { "forecast" }, Summary = "Register yourself to this API. A API-Key is send to your mail address. The address is only used to inform you about incompatible changes to this service.", Description = "Register yourself to this API.", Visibility = OpenApiVisibilityType.Important)]
+        [OpenApiOperation(operationId: "Register", tags: new[] { "Usage" }, Summary = "Register yourself to the Carbon Aware Computing API. A API-Key is send to your mail address. The address is only used to inform you about incompatible changes to this service.", Description = "Register yourself to this API.", Visibility = OpenApiVisibilityType.Important)]
         [OpenApiRequestBody("application/json", typeof(RegistrationData), Required = true, Description = "The mail address API-Key ist send")]
         [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NoContent, Summary = "API-Key sent. Operation succeeded", Description = "API-Key sent. Operation succeeded")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "failed operation", Description = "failed operation")]
@@ -57,32 +53,13 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         {
             try
             {
-                using var streamReader = new StreamReader(req.Body);
-                var requestBody = await streamReader.ReadToEndAsync();
-                var registration = JsonConvert.DeserializeObject<RegistrationData>(requestBody);
-                var mailAddress = registration?.MailAddress;
-                if (string.IsNullOrWhiteSpace(mailAddress))
-                {
-                    return new BadRequestObjectResult(new ProblemDetails()
-                    {
-                        Detail = "Invalid or empty mail address",
-                        Status = 400
-                    });
-                }
-
-                var apiKey = await StringCipher.EncryptAsync(mailAddress, m_ApplicationSettings.Value.ApiKeyPassword!);
-
                 var template = await System.IO.File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
-                if (!await SendApiKeyAsync(log, mailAddress, apiKey, template))
-                {
-                    return new BadRequestObjectResult(new ProblemDetails()
-                    {
-                        Detail = "Could not send the API-Key",
-                        Status = 400
-                    });
-                }
-
-                return new NoContentResult();
+                var apiKeyPassword = m_ApplicationSettings.Value.ApiKeyPassword!;
+                var mailFrom = m_ApplicationSettings.Value.MailFrom;
+                var tenantId = m_ApplicationSettings.Value.TenantId;
+                var clientId = m_ApplicationSettings.Value.ClientId;
+                var clientSecret = m_ApplicationSettings.Value.ClientSecret;
+                return await ApiRegistration.Register(req.Body, apiKeyPassword!, template, mailFrom, tenantId, clientId, clientSecret, log);
             }
             catch (Exception ex)
             {
@@ -92,7 +69,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         }
 
         [OpenApiOperation(operationId: "GetBestExecutionTime", tags: new[] { "forecast" }, Summary = "Get the best execution time with minimal grid carbon intensity", Description = "Get the best execution time with minimal grid carbon intensity. A time intervall of the given duration within the earliest and latest execution time with the most renewable energy in the power grid of the location", Visibility = OpenApiVisibilityType.Important)]
-        [OpenApiParameter(name: "location", In = ParameterLocation.Query, Required = true, Type = typeof(IEnumerable<string>), Example = typeof(LocationExample), Description = "Comma seperated list of named locations (de,fr) or multiple location (location=fr & location=de) ")]
+        [OpenApiParameter(name: "location", In = ParameterLocation.Query, Required = true, Type = typeof(IEnumerable<string>), Example = typeof(LocationsExample), Description = "Comma seperated list of named locations (de,fr) or multiple location (location=fr & location=de) ")]
         [OpenApiParameter(name: "dataStartAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataStartAtExample), Description = "Start time boundary of forecasted data points. Ignores current forecast data points before this time. Defaults to the earliest time in the forecast data.")]
         [OpenApiParameter(name: "dataEndAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataEndAtExample), Description = "End time boundary of forecasted data points. Ignores current forecast data points after this time. Defaults to the latest time in the forecast data.")]
         [OpenApiParameter(name: "windowSize", In = ParameterLocation.Query, Required = false, Type = typeof(int), Example = typeof(WindowSizeExample), Description = "The estimated duration (in minutes) of the workload. Defaults to 5 Minutes (This is different from GSF SDK which default to the duration of a single forecast data point).")]
@@ -130,7 +107,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     });
                 }
 
-                if (!TryGetDateTimeOffset(req.Query["dataStartAt"], DateTimeOffset.MinValue, out var dataStartAt))
+                if (!req.Query["dataStartAt"].TryGetDateTimeOffset(DateTimeOffset.MinValue, out var dataStartAt))
                 {
                     return new BadRequestObjectResult(new ProblemDetails()
                     {
@@ -139,7 +116,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     });
                 }
 
-                if (!TryGetDateTimeOffset(req.Query["dataEndAt"], DateTimeOffset.MaxValue, out var dataEndAt))
+                if (!req.Query["dataEndAt"].TryGetDateTimeOffset(DateTimeOffset.MaxValue, out var dataEndAt))
                 {
                     return new BadRequestObjectResult(new ProblemDetails()
                     {
@@ -148,7 +125,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     });
                 }
 
-                if (!TryGetInt(req.Query["windowSize"], 5, out var windowSize))
+                if (!req.Query["windowSize"].TryGetInt(5, out var windowSize))
                 {
                     return new BadRequestObjectResult(new ProblemDetails()
                     {
@@ -198,7 +175,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
             }
         }
 
-        [OpenApiOperation(operationId: "GetLocations", tags: new[] { "forecast" }, Summary = "Get a list of available locations. Not all locations are active, to avoid unnecessary computing. Send a message to 'a.mirmohammadi@bluehands.de' to activate a location.", Description = "Get a list of available locations. Not all locations are active, to avoid unnecessary computing. Send a message to 'a.mirmohammadi@bluehands.de' to activate a location.", Visibility = OpenApiVisibilityType.Important)]
+        [OpenApiOperation(operationId: "GetLocations", tags: new[] { "Usage" }, Summary = "Get a list of available locations. Not all locations are active, to avoid unnecessary computing. Send a message to 'a.mirmohammadi@bluehands.de' to activate a location.", Description = "Get a list of available locations. Not all locations are active, to avoid unnecessary computing. Send a message to 'a.mirmohammadi@bluehands.de' to activate a location.", Visibility = OpenApiVisibilityType.Important)]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(AvailableLocation[]), Summary = "Operation succeeded", Description = "Operation succeeded")]
         [FunctionName("GetLocations")]
         public IActionResult GetLocations(
@@ -208,87 +185,8 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         {
             return new OkObjectResult(ComputingLocations.All.Select(c => new AvailableLocation(c)));
         }
-        private async Task<bool> SendApiKeyAsync(ILogger log, string mailAddress, string apiKey, string template)
-        {
-            var tenantId = m_ApplicationSettings.Value.TenantId;
-            var clientId = m_ApplicationSettings.Value.ClientId;
-            var clientSecret = m_ApplicationSettings.Value.ClientSecret;
-
-            var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
-            var graphClient = new GraphServiceClient(credential);
-
-            Message message = new()
-            {
-                Subject = "Your API-Key for Carbon Aware Computing Execution Forecast ",
-                Body = new ItemBody
-                {
-                    ContentType = BodyType.Text,
-                    Content = template.Replace("{{APIKEY}}", apiKey)
-                },
-                ToRecipients = new List<Recipient>()
-                {
-                    new Recipient
-                    {
-                        EmailAddress = new EmailAddress
-                        {
-                            Address = mailAddress
-                        }
-                    }
-                }
-            };
-
-            bool saveToSentItems = true;
-
-            try
-            {
-                await graphClient.Users[m_ApplicationSettings.Value.MailFrom]
-                    .SendMail(message, saveToSentItems)
-                    .Request()
-                    .PostAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                log.LogError($"Could not send mail to {mailAddress}. Error: {ex.Message}");
-                return false;
-            }
-        }
-        private static bool TryGetDateTimeOffset(StringValues values, DateTimeOffset defaultDate, out DateTimeOffset date)
-        {
-            var d = values.FirstOrDefault();
-            if (d != null)
-            {
-                return DateTimeOffset.TryParse(d, out date);
-            }
-
-            date = defaultDate;
-            return true;
-        }
-        private static bool TryGetInt(StringValues values, int defaultData, out int data)
-        {
-            var d = values.FirstOrDefault();
-            if (d != null)
-            {
-                return Int32.TryParse(d, out data);
-            }
-
-            data = defaultData;
-            return true;
-        }
     }
 
-    public class LocationExample : OpenApiExample<string>
-    {
-        public override IOpenApiExample<string> Build(NamingStrategy namingStrategy = null)
-        {
-            Examples.Add(OpenApiExampleResolver.Resolve("Germany", "de", namingStrategy));
-            Examples.Add(OpenApiExampleResolver.Resolve("Austria and France", "at,fr", namingStrategy));
-            Examples.Add(OpenApiExampleResolver.Resolve("Azure francecentral", "francecentral", namingStrategy));
-            Examples.Add(OpenApiExampleResolver.Resolve("AWS eu-west-3", "eu-west-3", namingStrategy));
-            Examples.Add(OpenApiExampleResolver.Resolve("GCP europe-west9", "europe-west9", namingStrategy));
-            return this;
-        }
-    }
     public class DataStartAtExample : OpenApiExample<DateTimeOffset?>
     {
         public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
@@ -316,34 +214,6 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
             return this;
         }
     }
-
-    public static class DateTimeOffsetExtension
-    {
-        public static DateTimeOffset PadSeconds(this DateTimeOffset date)
-        {
-            return new DateTimeOffset(date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second,date.Offset);
-        }
-    }
-    public class AvailableLocation
-    {
-        public string Name { get; }
-        public bool IsActive { get; }
-        public AvailableLocation(ComputingLocation location)
-        {
-            if (location is CloudRegion cloudRegion)
-            {
-                Name = cloudRegion.Region;
-                IsActive = cloudRegion.IsActive;
-            }
-            else
-            {
-                Name = location.Name;
-                IsActive = location.IsActive;
-            }
-        }
-    }
-
-    public record RegistrationData(string MailAddress);
 
     [Serializable]
     public record EmissionsForecast

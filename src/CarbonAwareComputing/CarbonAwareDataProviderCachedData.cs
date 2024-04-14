@@ -4,7 +4,7 @@ using CarbonAware.Model;
 using GSF.CarbonAware.Handlers;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace CarbonAwareComputing.ExecutionForecast;
+namespace CarbonAwareComputing;
 
 public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvider
 {
@@ -69,17 +69,10 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
             var f = forecastData[i];
             if (now >= f.Time)
             {
-                return GridCarbonIntensity.Intensity(f.Rating);
+                return GridCarbonIntensity.EmissionData(f.Location, f.Time, f.Rating);
             }
         }
         return GridCarbonIntensity.NoData();
-
-        var emissionsData = forecastData.FirstOrDefault(e => e.Time >= now);
-        if (emissionsData is null)
-        {
-            return GridCarbonIntensity.NoData();
-        }
-        return GridCarbonIntensity.Intensity(emissionsData.Rating);
 
     }
 

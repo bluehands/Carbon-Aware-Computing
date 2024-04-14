@@ -1,10 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using FunicularSwitch.Generators;
+﻿using FunicularSwitch.Generators;
 
 // ReSharper disable InconsistentNaming
-namespace CarbonAwareComputing.ExecutionForecast;
+namespace CarbonAwareComputing;
 public abstract class CarbonAwareDataProvider
 {
     public abstract Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset latestExecutionTime, TimeSpan estimatedJobDuration);
@@ -60,14 +57,6 @@ public abstract class ExecutionTime
 
     public override int GetHashCode() => (int)UnionCase;
 }
-
-[UnionType(StaticFactoryMethods = true)]
-public abstract partial record GridCarbonIntensity;
-public record NoData : GridCarbonIntensity;
-public record Intensity(double Value) : GridCarbonIntensity;
-
-
-
 public static class ExecutionTimeExtension
 {
     public static T Match<T>(this ExecutionTime executionTime, Func<ExecutionTime.NoForecast_, T> noForecast, Func<ExecutionTime.BestExecutionTime_, T> bestExecutionTime)
@@ -99,3 +88,11 @@ public static class ExecutionTimeExtension
     public static async Task<T> Match<T>(this Task<ExecutionTime> executionTime, Func<ExecutionTime.NoForecast_, T> noForecast, Func<ExecutionTime.BestExecutionTime_, T> bestExecutionTime) => (await executionTime.ConfigureAwait(false)).Match(noForecast, bestExecutionTime);
     public static async Task<T> Match<T>(this Task<ExecutionTime> executionTime, Func<ExecutionTime.NoForecast_, Task<T>> noForecast, Func<ExecutionTime.BestExecutionTime_, Task<T>> bestExecutionTime) => await (await executionTime.ConfigureAwait(false)).Match(noForecast, bestExecutionTime).ConfigureAwait(false);
 }
+
+[UnionType(StaticFactoryMethods = true)]
+public abstract partial record GridCarbonIntensity;
+public record NoData : GridCarbonIntensity;
+public record EmissionData(string Location, DateTimeOffset Time, double Value) : GridCarbonIntensity;
+
+
+

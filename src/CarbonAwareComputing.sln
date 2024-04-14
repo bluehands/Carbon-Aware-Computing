@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.ExecutionForecast", "CarbonAwareComputing.ExecutionForecast\CarbonAwareComputing.ExecutionForecast.csproj", "{A9315047-8FA8-4F9D-A46B-C9D0D11A6C6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing", "CarbonAwareComputing\CarbonAwareComputing.csproj", "{A9315047-8FA8-4F9D-A46B-C9D0D11A6C6C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.ExecutionForecast.Function", "CarbonAwareComputing.ExecutionForecast.Function\CarbonAwareComputing.ExecutionForecast.Function.csproj", "{E32A9A7A-17CD-41EE-8B15-75A33D27268F}"
 EndProject
@@ -15,7 +15,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.Foreca
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.ForecastDownloader", "..\tools\CarbonAwareComputing.ForecastDownloader\CarbonAwareComputing.ForecastDownloader.csproj", "{69C08C6F-4812-4146-AB92-0A037B3FE1AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarbonAwareComputing.ExecutionForecast.Test", "..\tests\CarbonAwareComputing.ExecutionForecast.Test\CarbonAwareComputing.ExecutionForecast.Test.csproj", "{A5696AC6-B3C0-454A-B042-C6A114BCC958}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.ExecutionForecast.Test", "..\tests\CarbonAwareComputing.ExecutionForecast.Test\CarbonAwareComputing.ExecutionForecast.Test.csproj", "{A5696AC6-B3C0-454A-B042-C6A114BCC958}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarbonAwareComputing.Functions", "CarbonAwareComputing.Functions\CarbonAwareComputing.Functions.csproj", "{0F5EBBDD-565D-47CE-A50A-07833C15845C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarbonAwareComputing.GridCarbonIntensity.Function", "CarbonAwareComputing.GridCarbonIntensity.Function\CarbonAwareComputing.GridCarbonIntensity.Function.csproj", "{5464CF1F-2309-4A6F-BA81-AA56D2115325}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +55,14 @@ Global
 		{A5696AC6-B3C0-454A-B042-C6A114BCC958}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5696AC6-B3C0-454A-B042-C6A114BCC958}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5696AC6-B3C0-454A-B042-C6A114BCC958}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F5EBBDD-565D-47CE-A50A-07833C15845C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F5EBBDD-565D-47CE-A50A-07833C15845C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F5EBBDD-565D-47CE-A50A-07833C15845C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F5EBBDD-565D-47CE-A50A-07833C15845C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5464CF1F-2309-4A6F-BA81-AA56D2115325}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5464CF1F-2309-4A6F-BA81-AA56D2115325}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5464CF1F-2309-4A6F-BA81-AA56D2115325}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5464CF1F-2309-4A6F-BA81-AA56D2115325}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,7 +1,5 @@
 using System.Text;
 using CarbonAware.Model;
-using CarbonAwareComputing.ExecutionForecast.Test;
-using CarbonAwareComputing.ExecutionForecast;
 
 namespace CarbonAwareComputing.ExecutionForecast.Test
 {
@@ -53,7 +51,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_provided()
         {
-            Assert.IsTrue(m_Intensity is Intensity {Value: 151.2});
+            Assert.IsTrue(m_Intensity is EmissionData { Value: 151.2 });
         }
     }
 
@@ -89,7 +87,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_not_provided()
         {
-            Assert.IsTrue(m_Intensity is Intensity {Value: 185.3});
+            Assert.IsTrue(m_Intensity is EmissionData { Value: 185.3 });
         }
     }
 
@@ -107,7 +105,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_not_provided()
         {
-            Assert.IsTrue(m_Intensity is Intensity {Value: 0.0});
+            Assert.IsTrue(m_Intensity is EmissionData { Value: 0.0 });
         }
     }
 }

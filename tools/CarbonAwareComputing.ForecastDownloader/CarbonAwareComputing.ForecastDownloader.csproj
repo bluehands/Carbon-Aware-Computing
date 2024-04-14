@@ -12,6 +12,6 @@
 		<PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.22272.1" />
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\..\src\CarbonAwareComputing.ExecutionForecast\CarbonAwareComputing.ExecutionForecast.csproj" />
+	  <ProjectReference Include="..\..\src\CarbonAwareComputing\CarbonAwareComputing.csproj" />
 	</ItemGroup>
 </Project>

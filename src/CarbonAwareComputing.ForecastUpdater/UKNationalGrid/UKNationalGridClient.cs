@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using CarbonAwareComputing.ForecastUpdater.EnergyCharts;
 using FunicularSwitch;
 
 namespace CarbonAwareComputing.ForecastUpdater.UKNationalGrid;

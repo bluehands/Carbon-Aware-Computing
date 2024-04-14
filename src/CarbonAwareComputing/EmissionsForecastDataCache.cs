@@ -1,6 +1,6 @@
 ﻿using EmissionsData = CarbonAware.Model.EmissionsData;
 
-namespace CarbonAwareComputing.ExecutionForecast;
+namespace CarbonAwareComputing;
 
 internal abstract class EmissionsForecastDataCacheBase
 {

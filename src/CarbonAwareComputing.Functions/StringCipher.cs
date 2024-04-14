@@ -1,10 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace CarbonAwareComputing.ExecutionForecast.Function
+namespace CarbonAwareComputing.Functions
 {
     public static class StringCipher
     {

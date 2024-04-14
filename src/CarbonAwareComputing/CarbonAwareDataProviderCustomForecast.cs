@@ -1,4 +1,4 @@
-﻿namespace CarbonAwareComputing.ExecutionForecast;
+﻿namespace CarbonAwareComputing;
 
 public class CarbonAwareDataProviderWithCustomForecast : CarbonAwareDataProviderCachedData
 {

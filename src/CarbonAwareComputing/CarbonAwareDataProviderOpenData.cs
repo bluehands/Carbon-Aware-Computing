@@ -6,14 +6,12 @@ using CarbonAware.DataSources.WattTime.Configuration;
 using CarbonAware.DataSources.WattTime.Model;
 using CarbonAware.Model;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 // ReSharper disable InconsistentNaming
 
-namespace CarbonAwareComputing.ExecutionForecast;
+namespace CarbonAwareComputing;
 
 public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
 {
@@ -22,11 +20,11 @@ public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
 
     public CarbonAwareDataProviderOpenData()
     {
-        m_ForecastDataEndpointTemplate = $"https://carbonawarecomputing.blob.core.windows.net/forecasts/{0}.json";
+        m_ForecastDataEndpointTemplate = "https://carbonawarecomputing.blob.core.windows.net/forecasts/{0}.json";
     }
     public CarbonAwareDataProviderOpenData(string forecastDataEndpointTemplate) : base()
     {
-        m_ForecastDataEndpointTemplate = forecastDataEndpointTemplate;
+        m_ForecastDataEndpointTemplate = forecastDataEndpointTemplate ?? throw new ArgumentNullException(nameof(forecastDataEndpointTemplate));
     }
     protected override async Task<CachedData> FillEmissionsDataCache(ComputingLocation location, CachedData currentCachedData)
     {
