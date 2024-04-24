@@ -126,7 +126,7 @@
             <div class="ud-section-title">
               <h2>Provide developers with hassle free, easy to use, ready to run tools for Carbon Aware Computing</h2>
               <p>
-                Get tools to forecast the best execution time for tasks to minimize carbon emissions. All libraries and data are open source &amp; open data with unrestricted usage within personal, open source and commercial software.
+                Get tools to forecast the best execution time for tasks to minimize carbon emissions or use the Grid Carbon Intensity to calculate the Carbon Emissions of your digital services. All libraries and data are open source &amp; open data with unrestricted usage within personal, open source and commercial software.
               </p>
             </div>
           </div>
@@ -141,7 +141,7 @@
           <div class="ud-about-content-wrapper">
             <div class="ud-about-content">
               <!-- <span class="tag">About Us</span> -->
-              <h2>Time Shifting, Demand Shifting</h2>
+              <h2>Time Shifting, Demand Shifting, Carbon Intensity</h2>
               <p>
                 The basic idea behind the time shifting approach is moving the 
                 computing load into a point in time when the power grid has a 
@@ -151,7 +151,7 @@
               <p>
                 In addition to energy and hardware efficiency, carbon efficiency is one of the most important principles of green software development, like the Energiewende.
                 Energy is used when it is available from renewables. We shift the energy demand to a point in time when the carbon intensity of the grid is lower. 
-                To do this we need forecast data and some libs to calculate the appropriate execution window.
+                To do this we need forecast data and some libs to calculate the appropriate execution window. The carbon intensity is also used to calculate the carbon emissions based on electric power
               </p>
             </div>
           </div>
@@ -176,7 +176,7 @@
               <!-- <span>FAQ</span> -->
               <h2>Libraries & services</h2>
               <p>
-                A set of packages for .NET, public forecast Web-API and access to the forecast json formatted files.
+                A set of packages for .NET, public execution forecast & carbon intensity Web-API, Prometheus metrics and k8s configmap exporter and access to the actual &amp; forecast json formatted data files.
               </p>
               <p>
                 For more details, download and usage check the 
@@ -220,7 +220,7 @@
                     <br/>
                     <p>
                       <pre><code>
-Install-Package CarbonAwareComputing.ExecutionForecast
+Install-Package CarbonAwareComputing
                       </code></pre>
                     </p>
                     <p>
@@ -254,14 +254,14 @@ var executionTime = forecast.Match(
                 <button
                   class="ud-faq-btn collapsed"
                   data-bs-toggle="collapse"
-                  data-bs-target="#collapseTwo"
+                  data-bs-target="#collapseThree"
                 >
                   <span class="icon flex-shrink-0">
                     <i class="lni lni-chevron-down"></i>
                   </span>
                   <span>Forecast Web-API, a subset of the Carbon Aware SDK with open data</span>
                 </button>
-                <div id="collapseTwo" class="accordion-collapse collapse">
+                <div id="collapseThree" class="accordion-collapse collapse">
                   <div class="ud-faq-body">
                     <p>
                     We provide a live and ready to use subset of the Carbon Aware SDK. 
@@ -270,7 +270,7 @@ var executionTime = forecast.Match(
                     to play around with the API.
                     </p>
                     <br>
-                    <p>To use the API, you must register to the service by submitting a valid email address. 
+                    <p>To use the API, you must register to the service by submitting a valid email address. This registration is also suitable for the intensity API. 
                     Please check the <i>register</i> endpoint in the Swagger UI. The API-Key is sent to this email.                                         
                     </p>
                     <br>
@@ -290,14 +290,14 @@ var executionTime = forecast.Match(
                 <button
                   class="ud-faq-btn collapsed"
                   data-bs-toggle="collapse"
-                  data-bs-target="#collapseSix"
+                  data-bs-target="#collapseFive"
                 >
                   <span class="icon flex-shrink-0">
                     <i class="lni lni-chevron-down"></i>
                   </span>
                   <span>PowerShell Cmdlets</span>
                 </button>
-                <div id="collapseSix" class="accordion-collapse collapse">
+                <div id="collapseFive" class="accordion-collapse collapse">
                   <div class="ud-faq-body">
                     <p>
                     Use a PowerShell Cmdlet in automation scripts to forecast the beste execution time. 
@@ -312,10 +312,98 @@ Install-Module -Name CarbonAwareComputing
                   </div>
                 </div>
               </div>
+            </div>   
+            <div class="ud-single-faq wow fadeInUp" data-wow-delay=".15s">
+              <div class="accordion">
+                <button
+                  class="ud-faq-btn collapsed"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseSeven"
+                >
+                  <span class="icon flex-shrink-0">
+                    <i class="lni lni-chevron-down"></i>
+                  </span>
+                  <span>Prometheus metrics</span>
+                </button>
+                <div id="collapseSeven" class="accordion-collapse collapse">
+                  <div class="ud-faq-body">
+                    <p>
+                    Get the grid carbon intensity as Prometheus metrics. See the <a href="https://github.com/bluehands/kubernetes-grid-carbon-intensity-metrics-exporter" target="_blank">GitHub Repository</a> for more details.   
+                    </p>                    
+                  </div>
+                </div>
+              </div>
+            </div>  
+            <div class="ud-single-faq wow fadeInUp" data-wow-delay=".15s">
+              <div class="accordion">
+                <button
+                  class="ud-faq-btn collapsed"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseNine"
+                >
+                  <span class="icon flex-shrink-0">
+                    <i class="lni lni-chevron-down"></i>
+                  </span>
+                  <span>Kubernetes config map exporter for Carbon Aware KEDA Operator</span>
+                </button>
+                <div id="collapseNine" class="accordion-collapse collapse">
+                  <div class="ud-faq-body">
+                    <p>
+                    To support the <a href="https://github.com/Azure/carbon-aware-keda-operator" target="_blank">Carbon Aware KEDA Operator</a> a compatible data exporter is provided. The data is used to adjust the scaling of k8s nodes based on the carbon intensity to implement Demand Shaping.
+                  </p>                    
+                  <p>
+                    See the <a href="https://github.com/bluehands/kubernetes-grid-carbon-intensity-configmap-exporter" target="_blank">GitHub Repository</a> for more details.   
+                    </p>                    
+                  </div>
+                </div>
+              </div>
             </div>            
           </div>
           <div class="col-lg-6">
             <div class="ud-single-faq wow fadeInUp" data-wow-delay=".1s">
+              <div class="accordion">
+                <button
+                  class="ud-faq-btn collapsed"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseTwo"
+                >
+                  <span class="icon flex-shrink-0">
+                    <i class="lni lni-chevron-down"></i>
+                  </span>
+                  <span>Get the actual grid carbon intensity in your software</span>
+                </button>
+                <div id="collapseTwo" class="accordion-collapse collapse">
+                  <div class="ud-faq-body">
+                    Use the NuGet-Package for your .NET project to get the actual grid carbon intensity for a given location.
+                    <br/>
+                    <br/>
+                    <p>
+                      <pre><code>
+Install-Package CarbonAwareComputing
+                      </code></pre>
+                    </p>
+                    <p>
+                      <pre><code>
+var intensity = provider.GetCarbonIntensity(
+    ComputingLocations.Germany,
+    DateTimeOffset.Now);
+intensity.Match(
+    emissionData =>
+    {
+        Console.WriteLine($"Current grid carbon intensity: {emissionData.Value}");
+    },
+    _ =>
+    {
+        Console.WriteLine($"Data not available);
+    });                      
+                      </code></pre>
+                    </p>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+            <div class="ud-single-faq wow fadeInUp" data-wow-delay=".15s">
               <div class="accordion">
                 <button
                   class="ud-faq-btn collapsed"
@@ -325,9 +413,45 @@ Install-Module -Name CarbonAwareComputing
                   <span class="icon flex-shrink-0">
                     <i class="lni lni-chevron-down"></i>
                   </span>
-                  <span>Hangfire Extension</span>
+                  <span>Actual Grid Carbon Intensity Web-API</span>
                 </button>
                 <div id="collapseFour" class="accordion-collapse collapse">
+                  <div class="ud-faq-body">
+                    <p>
+                    We provide a live and ready to use API to get the actual grid carbon intensity for a given location. 
+                    The API is available at <a href="https://intensity.carbon-aware-computing.com/" target="_blank">https://intensity.carbon-aware-computing.com/</a>. 
+                    Use the <a href="https://intensity.carbon-aware-computing.com/swagger/UI" target="_blank">Swagger UI</a> 
+                    to play around with the API.
+                    </p>
+                    <br>
+                    <p>To use the API, you must register to the service by submitting a valid email address. This registration is also suitable for the forecast API.
+                    Please check the <i>register</i> endpoint in the Swagger UI. The API-Key is sent to this email.                                         
+                    </p>
+                    <br>
+                    <p>
+                      We will use this address only to inform you about important changes to the service. 
+                      </p>
+                      <br>
+                      <p>
+                      For more details check the <a href="https://github.com/bluehands/Carbon-Aware-Computing" target="_blank">GitHub Repository</a>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ud-single-faq wow fadeInUp" data-wow-delay=".1s">
+              <div class="accordion">
+                <button
+                  class="ud-faq-btn collapsed"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseSix"
+                >
+                  <span class="icon flex-shrink-0">
+                    <i class="lni lni-chevron-down"></i>
+                  </span>
+                  <span>Hangfire Extension</span>
+                </button>
+                <div id="collapseSix" class="accordion-collapse collapse">
                   <div class="ud-faq-body">
                     Hangfire is one of the most used tools for background processing in .NET. 
                     Use the <a href="https://github.com/bluehands/Hangfire.Community.CarbonAwareExecution" target="_blank">Hangfire.Community.CarbonAwareExecution</a> 
@@ -356,14 +480,14 @@ UseCarbonAwareDataProvider(
                 <button
                   class="ud-faq-btn collapsed"
                   data-bs-toggle="collapse"
-                  data-bs-target="#collapseFive"
+                  data-bs-target="#collapseEight"
                 >
                   <span class="icon flex-shrink-0">
                     <i class="lni lni-chevron-down"></i>
                   </span>
                   <span>Carbon Aware SDK as NuGet-Package</span>
                 </button>
-                <div id="collapseFive" class="accordion-collapse collapse">
+                <div id="collapseEight" class="accordion-collapse collapse">
                   <div class="ud-faq-body">
                     <p>
                     We have <a href="https://github.com/bluehands/carbon-aware-sdk" target="_blank">fork the Carbon Aware SDK</a> 
@@ -399,22 +523,22 @@ Install-Package GSF.CarbonAware.Unofficial
             <div class="ud-about-content">
               <h2>Open Data</h2>
               <p>
-                The forecast data for Europe (without UK) is gathered from <a href="https://www.energy-charts.info/" target="_blank">Energy Charts</a> 
+                The forecast and actual data for Europe (without UK) is gathered from <a href="https://www.energy-charts.info/" target="_blank">Energy Charts</a> 
                 provided by <a href="https://www.ise.fraunhofer.de/" target="_blank">Frauenhofer ISE</a>. 
                 It is licensed as <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC0</a>. 
                 You may use it for any purpose without any credits.
               </p>
               <p>
-                The forecast data for United Kingdom is gathered from <a href="https://carbonintensity.org.uk/" target="_blank">UK National Grid ESO</a>. 
+                The forecast and actual data for United Kingdom is gathered from <a href="https://carbonintensity.org.uk/" target="_blank">UK National Grid ESO</a>. 
                 It is licensed as <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0 DEED</a>. See <a href="https://github.com/carbon-intensity/terms/" target="_blank">terms of usage</a>
               </p>
               <p>
-                The forecast data is available as json formatted files, separated for every single location. The files are directly consumable 
+                The forecast and actual data is available as json formatted files, separated for every single location. The files are directly consumable 
                 by the Carbon Aware SDK. For more details and download instructions check the 
                 <a href="https://github.com/bluehands/Carbon-Aware-Computing" target="_blank">GitHub Repository</a>.
               </p>
               <p>
-                The forecast data for Europe (without UK) is based on reported energy production (current) and forecast production for Wind (on-shore & off-shore) and Solar. 
+                The forecast and actual data for Europe (without UK) is based on reported energy production (current) and forecast production for Wind (on-shore & off-shore) and Solar. 
                 There are publicly available from the <a href="https://transparency.entsoe.eu/" target="_blank">ENTSO-E Transparency Platform</a> 
                 maintained by the power grid Transmission System Operators (TSO). For the additional renewable energy sources like running water or biomass, 
                 the forecast is calculated as an interpolation of the last hours.                 
@@ -443,7 +567,7 @@ Install-Package GSF.CarbonAware.Unofficial
               </p>
               <br>
               <p>
-                You may contribute to forecast data for 
+                You may contribute to forecast and actual data for 
                 other regions than Europe or help to integrate time shifting 
                 in other popular processing systems and libraries. Migration to other 
                 programming languages and runtime systems is very efficacious as well. 

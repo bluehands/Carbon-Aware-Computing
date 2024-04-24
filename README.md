@@ -102,9 +102,11 @@ There are extension to **Enqueue** and **Schedule** with *WithCarbonAwarenessAsy
 
 We provide a live and ready to use subset of the Carbon Aware SDK. The API is available from this location: [https://forecast.carbon-aware-computing.com/](https://forecast.carbon-aware-computing.com/). Use the Swagger UI [https://forecast.carbon-aware-computing.com/swagger/UI](https://forecast.carbon-aware-computing.com/swagger/UI) to play around with the API.
 
+We also provide an endpoint to get the actual grid carbon intensity. The API is available from this location: [https://intensity.carbon-aware-computing.com/](https://intensity.carbon-aware-computing.com/). Use the Swagger UI [https://intensity.carbon-aware-computing.com/swagger/UI](https://intensity.carbon-aware-computing.com/swagger/UI) to play around with the API.
+
 ### Registration
 
-To use the API, you must register to the service submitting a valid eMail-Address. Please check the *register* endpoint in the Swagger UI. The API-Key is send to this email. We will use this address only to inform you about important changes to the service.
+To use the API, you must register to the service submitting a valid eMail-Address. Please check the *register* endpoint in the Swagger UI. The API-Key is send to this email. We will use this address only to inform you about important changes to the service. The registration is suitable for both API (Execution Forecast & Grid Carbon Intensity)
 
 ``` powershell
 curl -X POST "https://forecast.carbon-aware-computing.com/register" -H  "accept: */*" -H  "Content-Type: application/json" -d "{\"mailAddress\":\"someone@example.com\"}"
@@ -143,6 +145,16 @@ Get-CarbonAwareExecutionTime -Location at -EarliestExecutionTime $now -LatestExe
 ```
 
 Set the *FallbackExecutionTime* Parameter to set the execution time when no forecast is available. This command is designed to be used in scripts, therefor no errors are thrown.
+
+## Prometheus metrics for grid carbon intensity
+
+There is a Kubernetes Prometheus metrics exporter to report the actual grid carbon intensity. Use this exporter to calculate the carbon emission based on electricity power. This exporter may be combined with data from [kepler](https://sustainable-computing.io/) or [Scaphandre](https://github.com/hubblo-org/scaphandre).  
+
+See the [GitHub repository](https://github.com/bluehands/kubernetes-grid-carbon-intensity-metrics-exporter) for usage and installation.
+
+## Kubernetes grid carbon exporter
+
+To support the [Carbon Aware KEDA Operator](https://github.com/Azure/carbon-aware-keda-operator) a compatible grid carbon exporter is provided. The data is exported in to a k8s configmap to adjust the number of scaled nodes. See the [GitHub repository](https://github.com/bluehands/kubernetes-grid-carbon-intensity-configmap-exporter) for usage and installation.
 
 ## Data
 
