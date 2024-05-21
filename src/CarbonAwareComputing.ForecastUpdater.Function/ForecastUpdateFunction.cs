@@ -81,7 +81,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
                     energyChartsRoot => EnergyChartsTransform.ImportForecast(energyChartsRoot, computingLocation.Name)).Bind(
                     emissionsForecast => forecastStatisticsClient.UpdateForecastData(computingLocation, emissionsForecast)).Bind(
                     emissionsForecast => Transform.Serialize(emissionsForecast)).Bind(
-                    json => cachedForecastClient.UpdateForecastData(computingLocation, json)
+                    jsonFiles => cachedForecastClient.UpdateForecastData(computingLocation, jsonFiles)
                 ).Match(
                     o => No.Thing,
                     e =>

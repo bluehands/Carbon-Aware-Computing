@@ -2,6 +2,12 @@
 
 namespace CarbonAwareComputing.ForecastUpdater
 {
+    public class EmissionsForecastMinimizedJsonFile
+    {
+        public long Start { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        public int Interval { get; set; } = 0;
+        public List<double> Ratings { get; set; } = new();
+    }
     public class EmissionsForecastJsonFile
     {
         public DateTimeOffset GeneratedAt { get; set; } = DateTimeOffset.Now;
