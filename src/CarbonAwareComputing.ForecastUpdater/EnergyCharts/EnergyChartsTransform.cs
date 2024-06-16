@@ -5,52 +5,6 @@ namespace CarbonAwareComputing.ForecastUpdater.EnergyCharts;
 
 public static class EnergyChartsTransform
 {
-    public static Result<EmissionsForecast> ImportForecast(List<EnergyChartRoot> roots, string country)
-    {
-        try
-        {
-            var location = country;
-            var generatedAt = DateTimeOffset.Now;
-            var result = CreateTimeAxis(roots, country);
-            return result.Bind<List<EmissionsData>>(
-                forecast =>
-                {
-                    foreach (var root in roots)
-                    {
-                        if (root.Date.HasValue)
-                        {
-                            generatedAt = DateTimeOffset.FromUnixTimeMilliseconds(root.Date.Value);
-                        }
-
-                        var values = root.Data.ToArray();
-
-                        for (int i = 0; i < values.Length; i++)
-                        {
-                            var value = values[i];
-                            if (value != null)
-                            {
-                                forecast[i] = forecast[i] with
-                                {
-                                    Rating = 100 - value.Value
-                                };
-                            }
-                        }
-                    }
-                    return forecast.Values.ToList();
-                }).Bind<EmissionsForecast>(
-                emissions => new EmissionsForecast
-                {
-                    GeneratedAt = generatedAt,
-                    Location = new Location { Name = location },
-                    ForecastData = emissions
-                }
-            );
-        }
-        catch (Exception ex)
-        {
-            return Result.Error<EmissionsForecast>(ex.Message);
-        }
-    }
     public static Result<EmissionsForecast> ImportForecast(EnergyChartCarbonGridIntensityRoot root, string country)
     {
         try
@@ -76,7 +30,7 @@ public static class EnergyChartsTransform
                             };
                         }
                     }
-                    return forecast.Values.ToList();
+                    return forecast.Values.Where(f => f.Rating > 0).ToList();
                 }).Bind<EmissionsForecast>(
                 emissions => new EmissionsForecast
                 {

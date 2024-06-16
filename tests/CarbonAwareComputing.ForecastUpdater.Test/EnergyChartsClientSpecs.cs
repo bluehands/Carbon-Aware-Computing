@@ -53,21 +53,21 @@ namespace CarbonAwareComputing.ForecastUpdater.Test
         [TestMethod]
         public void Then_a_the_forecast_is_generated()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.Any());
         }
         [TestMethod]
         public void Then_all_forecast_ratings_are_set()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.All(f => f.Rating > 0));
         }
         [TestMethod]
         public void Then_all_forecast_duration_is_15_minute()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.All(f => f.Duration == TimeSpan.FromMinutes(15)));
         }
@@ -86,21 +86,21 @@ namespace CarbonAwareComputing.ForecastUpdater.Test
         [TestMethod]
         public void Then_a_the_forecast_is_generated()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.Any());
         }
         [TestMethod]
         public void Then_all_forecast_ratings_are_set()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.All(f => f.Rating > 0));
         }
         [TestMethod]
         public void Then_all_forecast_duration_is_15_minute()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.All(f => f.Duration == TimeSpan.FromMinutes(15)));
         }
@@ -120,21 +120,21 @@ namespace CarbonAwareComputing.ForecastUpdater.Test
         [TestMethod]
         public void Then_a_the_forecast_is_generated()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.Any());
         }
         [TestMethod]
         public void Then_all_forecast_ratings_are_set()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.All(f => f.Rating > 0));
         }
         [TestMethod]
         public void Then_all_forecast_duration_is_15_minute()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.All(f => f.Duration == TimeSpan.FromMinutes(60)));
         }
@@ -153,21 +153,21 @@ namespace CarbonAwareComputing.ForecastUpdater.Test
         [TestMethod]
         public void Then_a_the_forecast_is_generated()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.Any());
         }
         [TestMethod]
         public void Then_all_forecast_ratings_are_set()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.All(f => f.Rating > 0));
         }
         [TestMethod]
         public void Then_all_forecast_duration_is_60_minute()
         {
-            var forecast = m_Forecast.Result.GetValueOrDefault();
+            var forecast = m_Forecast!.Result.GetValueOrDefault();
             Assert.IsNotNull(forecast);
             Assert.IsTrue(forecast.ForecastData.All(f => f.Duration == TimeSpan.FromMinutes(60)));
         }

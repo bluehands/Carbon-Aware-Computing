@@ -22,9 +22,19 @@ public static class ComputingLocations
     public static CloudRegion GCP_Europe_West6 { get; } = new("europe-west6", "ch");
     public static ComputingLocation France { get; } = new("fr");
     public static CloudRegion Azure_France_Central { get; } = new("francecentral", "fr");
+    public static CloudRegion Azure_West_Europe { get; } = new("westeurope", "nl");
     public static CloudRegion GCP_Europe_West9 { get; } = new("europe-west9", "fr");
+    public static CloudRegion GCP_Europe_North1 { get; } = new("europe-north1", "fi");
+    public static CloudRegion GCP_Europe_West1 { get; } = new("europe-west1", "be");
+    public static CloudRegion GCP_Europe_West10 { get; } = new("europe-west10", "de");
+    public static CloudRegion GCP_Europe_West4 { get; } = new("europe-west4", "nl");
     public static CloudRegion AWS_EU_West3 { get; } = new("eu-west-3", "fr");
+    public static CloudRegion AWS_EU_North1 { get; } = new("eu-north-1", "fi");
     public static ComputingLocation Austria { get; } = new("at");
+    public static ComputingLocation Netherlands { get; } = new("nl");
+    public static ComputingLocation Finland { get; } = new("fi");
+    public static ComputingLocation Belgium { get; } = new("be");
+    
 
     private static Dictionary<string, ComputingLocation> Active { get; } = new(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -33,6 +43,9 @@ public static class ComputingLocations
         {"Austria",Austria},
         {"Switzerland",Switzerland},
         {"UnitedKingdom",UnitedKingdom},
+        {"Netherlands",Netherlands},
+        {"Finland",Finland},
+        {"Belgium",Belgium},
         {"London",UnitedKingdomLondon},
         {"SouthWales",UnitedKingdomSouthWales},
         {"GermanyWestCentral",Azure_Germany_WestCentral},
@@ -40,12 +53,18 @@ public static class ComputingLocations
         {"FranceCentral",Azure_France_Central},
         {"UKSouth",Azure_UK_South},
         {"UKWest",Azure_UK_West},
+        {"WestEurope",Azure_West_Europe},
         {"eu-central-1",AWS_EU_Central1},
         {"eu-central-2",AWS_EU_Central2},
+        {"eu-north-1",AWS_EU_North1},
         {"eu-west-3",AWS_EU_West3},
+        {"europe-west1",GCP_Europe_West1},
         {"europe-west3",GCP_Europe_West3},
+        {"europe-west4",GCP_Europe_West4},
         {"europe-west6",GCP_Europe_West6},
         {"europe-west9",GCP_Europe_West9},
+        {"europe-west10",GCP_Europe_West10},
+        {"europe-north1",GCP_Europe_North1},
     };
     public static List<ComputingLocation> All { get; } = new()
     {
@@ -53,6 +72,9 @@ public static class ComputingLocations
         France,
         Austria,
         Switzerland,
+        Belgium,
+        Finland,
+        Netherlands,
         UnitedKingdom,
         UnitedKingdomLondon,
         UnitedKingdomSouthWales,
@@ -69,14 +91,12 @@ public static class ComputingLocations
         GCP_Europe_West9,
         new InactiveComputingLocation("az"),
         new InactiveComputingLocation("ba"),
-        new InactiveComputingLocation("be"),
         new InactiveComputingLocation("by"),
         new InactiveComputingLocation("cy"),
         new InactiveComputingLocation("cz"),
         new InactiveComputingLocation("dk"),
         new InactiveComputingLocation("ee"),
         new InactiveComputingLocation("es"),
-        new InactiveComputingLocation("fi"),
         new InactiveComputingLocation("ge"),
         new InactiveComputingLocation("gr"),
         new InactiveComputingLocation("hr"),
@@ -90,7 +110,6 @@ public static class ComputingLocations
         new InactiveComputingLocation("mk"),
         new InactiveComputingLocation("mt"),
         new InactiveComputingLocation("nie"),
-        new InactiveComputingLocation("nl"),
         new InactiveComputingLocation("no"),
         new InactiveComputingLocation("pl"),
         new InactiveComputingLocation("pt"),

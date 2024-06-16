@@ -200,7 +200,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     {
         public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
         {
-            Examples.Add(OpenApiExampleResolver.Resolve("In five hours", DateTimeOffset.Now.AddHours(1).PadSeconds(), namingStrategy));
+            Examples.Add(OpenApiExampleResolver.Resolve("In five hours", DateTimeOffset.Now.AddHours(5).PadSeconds(), namingStrategy));
             Examples.Add(OpenApiExampleResolver.Resolve("In ten hours", DateTimeOffset.Now.AddHours(10).PadSeconds(), namingStrategy));
             return this;
         }

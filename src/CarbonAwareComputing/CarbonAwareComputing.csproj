@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>CarbonAwareComputing</PackageId>
-		<Version>2.0.1</Version>
+		<Version>2.0.2</Version>
 		<Authors>Implemented with 💙 by bluehands</Authors>
 		<Company>bluehands GmbH &amp; Co.mmunication KG</Company>
 		<PackageTags>bluehands; Carbon Aware Computing; Grid Carbon Intensity; Sustainability; Green Software</PackageTags>

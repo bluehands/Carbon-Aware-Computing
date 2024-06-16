@@ -14,7 +14,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddSingleton<CarbonAwareDataProvider, CarbonAwareDataProviderOpenData>();
+            builder.Services.AddSingleton<CarbonAwareDataProvider, CarbonAwareDataProviderOpenData>(p => new CarbonAwareDataProviderOpenData());
             builder.Services.AddOptions<ApplicationSettings>()
                 .Configure<IConfiguration>((settings, configuration) =>
                 {

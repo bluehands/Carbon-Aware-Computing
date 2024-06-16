@@ -3,7 +3,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Test
     [TestClass]
     public abstract class ContextSpecification
     {
-        public static TestContext TestContext { get; set; }
+        public static TestContext? TestContext { get; set; }
 
         [AssemblyInitialize]
         public static void SetupTests(TestContext testContext)
