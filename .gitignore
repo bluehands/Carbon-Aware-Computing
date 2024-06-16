@@ -353,3 +353,4 @@ MigrationBackup/
 /src/CarbonAwareComputing.GridCarbonIntensity.Function/Properties/ServiceDependencies/CarbonAwareComputingGridCarbonIntensity - Zip Deploy/profile.arm.json
 /src/CarbonAwareComputing.GridCarbonIntensity.Function/Properties/ServiceDependencies/CarbonAwareComputingGridCarbonIntensity - Zip Deploy/storage1.arm.json
 /src/CarbonAwareComputing.GridCarbonIntensity.Function/Properties/serviceDependencies.CarbonAwareComputingGridCarbonIntensity - Zip Deploy.json
+/src/CarbonAwareComputing.ExecutionForecast.Function/Properties/ServiceDependencies/CarbonAwareComputingExecutionForecast - Web Deploy
