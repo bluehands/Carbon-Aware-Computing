@@ -1,0 +1,11 @@
+Hello,
+
+thank you for doing carbon aware computing. To access the exceution forecast api you need the following 
+
+API-Key: {{APIKEY}}
+
+Please use the Header 'x-api-key' to send the API-Key.
+
+Best regards
+
+Aydin 
