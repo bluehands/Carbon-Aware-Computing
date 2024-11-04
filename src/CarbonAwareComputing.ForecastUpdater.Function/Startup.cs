@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System;
+using System.Net.Http;
+using Microsoft.Extensions.Options;
 
 [assembly: FunctionsStartup(typeof(CarbonAwareComputing.ForecastUpdater.Function.Startup))]
 namespace CarbonAwareComputing.ForecastUpdater.Function;
@@ -13,7 +15,13 @@ public class Startup : FunctionsStartup
         // Note: Only register dependencies, do not depend or request those in Configure().
         // Dependencies are only usable during function execution, not before (like here).
 
-        builder.Services.AddHttpClient();
+        builder.Services.AddHttpClient(Options.DefaultName).ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            return new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (httpRequestMessage, cert, certChain, policyErrors) => true
+            };
+        });
         builder.Services.AddOptions<ApplicationSettings>()
             .Configure<IConfiguration>((settings, configuration) =>
             {

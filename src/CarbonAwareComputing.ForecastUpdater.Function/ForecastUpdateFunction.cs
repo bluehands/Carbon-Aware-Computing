@@ -30,7 +30,9 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
         public ForecastUpdateFunction(IHttpClientFactory httpClientFactory, IOptions<ApplicationSettings> applicationSettings)
         {
             m_ApplicationSettings = applicationSettings;
+            
             m_Http = httpClientFactory.CreateClient();
+            
         }
 
 
