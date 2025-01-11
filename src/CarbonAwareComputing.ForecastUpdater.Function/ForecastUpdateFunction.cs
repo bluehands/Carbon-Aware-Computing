@@ -30,9 +30,9 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
         public ForecastUpdateFunction(IHttpClientFactory httpClientFactory, IOptions<ApplicationSettings> applicationSettings)
         {
             m_ApplicationSettings = applicationSettings;
-            
+
             m_Http = httpClientFactory.CreateClient();
-            
+
         }
 
 
@@ -122,31 +122,36 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
         {
             var forecastStatisticsClient = new ForecastStatisticsClient("carbonawarecomputing", "forecasts");
             var statistics = await forecastStatisticsClient.GetForecastData();
+            var forecastStatus = true;
             string messageText = statistics.Match(
                 s =>
                 {
                     var sb = new StringBuilder();
                     sb.
                         Append("Location").Append("\t").
-                        Append("GeneratedAt").Append("\t").
-                        Append("UploadedAt").Append("\t").
-                        Append("ForecastDurationInHours").Append("\t").
+                        Append("Status").Append("\t").
+                        Append("ForecastDuration").Append("\t").
                         Append("LastForecast").AppendLine();
                     foreach (var row in s)
                     {
+                        var e = new StatisticEvaluation(row);
+                        if (!e.Status.HasValue || !e.Status.Value)
+                        {
+                            forecastStatus = false;
+                        }
                         sb.
-                            Append(row.RowKey).Append("\t").
-                            Append(row.GeneratedAt).Append("\t").
-                            Append(row.UploadedAt).Append("\t").
-                            Append(row.ForecastDurationInHours).Append("\t").
-                            Append(row.LastForecast).AppendLine();
+                            Append(e.Location).Append("\t").
+                            Append(e.Status).Append("\t").
+                            Append(Convert.ToInt32(e.ForecastDuration?.TotalHours)).Append("\t").
+                            Append(e.LastForecast).AppendLine();
                     }
+
                     return sb.ToString();
                 },
                 e => $"Could not get forecast: {e}");
 
             var template = await System.IO.File.ReadAllTextAsync(Path.Combine(currentDirectory, "mail_template.txt"));
-            await SendStatisticsAsync(log, m_ApplicationSettings.Value.MailFrom, messageText, template);
+            await SendStatisticsAsync(log, m_ApplicationSettings.Value.MailFrom, messageText, forecastStatus, template);
         }
         private EnergyChartsClient GetEnergyChartsClient()
         {
@@ -178,7 +183,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
             });
             return client;
         }
-        private async Task<bool> SendStatisticsAsync(ILogger log, string mailAddress, string statistics, string template)
+        private async Task<bool> SendStatisticsAsync(ILogger log, string mailAddress, string statistics, bool forecastStatus, string template)
         {
             var tenantId = m_ApplicationSettings.Value.TenantId;
             var clientId = m_ApplicationSettings.Value.ClientId;
@@ -187,9 +192,11 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
             var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
             var graphClient = new GraphServiceClient(credential);
 
+            var status = forecastStatus ? "Ok" : "Error";
             Message message = new()
             {
-                Subject = "Statistics for Carbon Aware Computing Execution Forecast ",
+
+                Subject = $"{status} - Statistics for Carbon Aware Computing Execution Forecast",
                 Body = new ItemBody
                 {
                     ContentType = BodyType.Text,

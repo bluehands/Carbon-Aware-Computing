@@ -33,7 +33,7 @@ public class ForecastStatisticsClient
                 { "ForecastDurationInHours", (last.Time-first.Time).TotalHours },
                 { "LastForecast", last.Time }
             };
-            await tableClient.UpsertEntityAsync(tableEntity,TableUpdateMode.Replace);
+            await tableClient.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);
             return emissionsForecast;
         }
         catch (Exception ex)
@@ -76,4 +76,21 @@ public record Statistic : ITableEntity
     public ETag ETag { get; set; } = default!;
 
     public DateTimeOffset? Timestamp { get; set; } = default!;
+}
+
+public class StatisticEvaluation
+{
+    private readonly Statistic m_Statistic;
+
+    public StatisticEvaluation(Statistic statistic)
+    {
+        m_Statistic = statistic;
+    }
+    public string Location => m_Statistic.RowKey;
+    public DateTimeOffset? GeneratedAt => m_Statistic.GeneratedAt;
+    public DateTimeOffset? UploadedAt => m_Statistic.UploadedAt;
+    public double? ForecastDurationInHours => m_Statistic.ForecastDurationInHours;
+    public DateTimeOffset? LastForecast => m_Statistic.LastForecast;
+    public TimeSpan? ForecastDuration => m_Statistic.LastForecast - DateTime.Now;
+    public bool? Status => m_Statistic.LastForecast > DateTime.Now;
 }
