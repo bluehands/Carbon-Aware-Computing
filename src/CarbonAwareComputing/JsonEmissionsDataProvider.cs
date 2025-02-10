@@ -77,7 +77,7 @@ public class JsonEmissionsDataProvider : JsonEmissionsDataProviderBase, IDisposa
             eTag = "\"*\"";
         }
 
-        if (!eTag.StartsWith("\""))
+        if (!eTag!.StartsWith("\""))
         {
             eTag = "\"" + eTag + "\"";
         }

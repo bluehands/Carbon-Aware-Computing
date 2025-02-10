@@ -76,7 +76,7 @@ internal sealed class ForecastHandler : IForecastHandler
         forecast.Validate(dataStartAt, dataEndAt);
         forecast.ForecastData = IntervalHelper.FilterByDuration(forecast.ForecastData, dataStartAt, dataEndAt);
         forecast.ForecastData = forecast.ForecastData.RollingAverage(windowSize, dataStartAt, dataEndAt);
-        forecast.OptimalDataPoints = CarbonAwareOptimalEmission.GetOptimalEmissions(forecast.ForecastData);
+        forecast.OptimalDataPoints = CarbonAwareOptimalEmission.GetOptimalEmissions(forecast.ForecastData.ToArray());
         return forecast;
     }
 }

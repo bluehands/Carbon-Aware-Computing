@@ -16,6 +16,8 @@ namespace CarbonAware.DataSources.WattTime.Client;
 
 internal class WattTimeClient : IWattTimeClient
 {
+    public const string NamedClient = "WattTimeClient";
+
     private static readonly JsonSerializerOptions _options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
     private static readonly HttpStatusCode[] _retriableStatusCodes = new HttpStatusCode[]
@@ -36,13 +38,13 @@ internal class WattTimeClient : IWattTimeClient
 
     public WattTimeClient(IHttpClientFactory factory, IOptionsMonitor<WattTimeClientConfiguration> configurationMonitor, ILogger<WattTimeClient> log, IMemoryCache memoryCache)
     {
-        _client = factory.CreateClient(IWattTimeClient.NamedClient);
+        _client = factory.CreateClient(NamedClient);
         _configurationMonitor = configurationMonitor;
         _log = log;
         _configuration.Validate();
         _client.BaseAddress = new Uri(this._configuration.BaseUrl);
         _client.DefaultRequestHeaders.Accept.Clear();
-        _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
+        _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         _memoryCache = memoryCache;
     }
 

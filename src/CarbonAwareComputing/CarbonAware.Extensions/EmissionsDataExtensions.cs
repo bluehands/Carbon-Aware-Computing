@@ -177,7 +177,7 @@ internal static class EmissionsDataExtensions
             {
                 var lowerBound = (startTime >= current.Time) ? startTime : current.Time;
                 var upperBound = (endTime < currentEndTime) ? endTime : currentEndTime;
-                rating += current.Rating * (upperBound - lowerBound) / totalDuration;
+                rating += current.Rating * (upperBound - lowerBound).TotalSeconds / totalDuration.TotalSeconds;
             }
 
             startTimeCoverage = startTimeCoverage ? startTimeCoverage : (startTime >= current.Time && startTime < currentEndTime);

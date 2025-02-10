@@ -42,7 +42,7 @@ public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
             eTag = "\"*\"";
         }
 
-        if (!eTag.StartsWith("\""))
+        if (!eTag!.StartsWith("\""))
         {
             eTag = "\"" + eTag + "\"";
         }

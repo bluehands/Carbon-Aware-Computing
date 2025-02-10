@@ -53,13 +53,13 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         {
             try
             {
-                var template = await System.IO.File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
-                var apiKeyPassword = m_ApplicationSettings.Value.ApiKeyPassword!;
+                var template = await File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
+                var apiKeyPassword = m_ApplicationSettings.Value.ApiKeyPassword;
                 var mailFrom = m_ApplicationSettings.Value.MailFrom;
                 var tenantId = m_ApplicationSettings.Value.TenantId;
                 var clientId = m_ApplicationSettings.Value.ClientId;
                 var clientSecret = m_ApplicationSettings.Value.ClientSecret;
-                return await ApiRegistration.Register(req.Body, apiKeyPassword!, template, mailFrom, tenantId, clientId, clientSecret, log);
+                return await ApiRegistration.Register(req.Body, apiKeyPassword, template, mailFrom, tenantId, clientId, clientSecret, log);
             }
             catch (Exception ex)
             {
@@ -92,7 +92,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     return new StatusCodeResult(403);
                 }
 
-                var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword!);
+                var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword);
                 if (string.IsNullOrEmpty(apiKey))
                 {
                     return new StatusCodeResult(403);
@@ -141,7 +141,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     {
                         continue;
                     }
-                    var best = await m_Provider.CalculateBestExecutionTime(computingLocation!, dataStartAt, dataEndAt, TimeSpan.FromMinutes(windowSize));
+                    var best = await m_Provider.CalculateBestExecutionTime(computingLocation, dataStartAt, dataEndAt, TimeSpan.FromMinutes(windowSize));
                     if (best is ExecutionTime.BestExecutionTime_ bestExecutionTime)
                     {
                         forecasts.Add(new EmissionsForecast
@@ -189,7 +189,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
 
     public class DataStartAtExample : OpenApiExample<DateTimeOffset?>
     {
-        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
+        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy? namingStrategy = null)
         {
             Examples.Add(OpenApiExampleResolver.Resolve("Now", DateTimeOffset.Now.PadSeconds(), namingStrategy));
             Examples.Add(OpenApiExampleResolver.Resolve("In one hour", DateTimeOffset.Now.AddHours(1).PadSeconds(), namingStrategy));
@@ -198,7 +198,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     }
     public class DataEndAtExample : OpenApiExample<DateTimeOffset?>
     {
-        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
+        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy? namingStrategy = null)
         {
             Examples.Add(OpenApiExampleResolver.Resolve("In five hours", DateTimeOffset.Now.AddHours(5).PadSeconds(), namingStrategy));
             Examples.Add(OpenApiExampleResolver.Resolve("In ten hours", DateTimeOffset.Now.AddHours(10).PadSeconds(), namingStrategy));
@@ -207,7 +207,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     }
     public class WindowSizeExample : OpenApiExample<int?>
     {
-        public override IOpenApiExample<int?> Build(NamingStrategy namingStrategy = null)
+        public override IOpenApiExample<int?> Build(NamingStrategy? namingStrategy = null)
         {
             Examples.Add(OpenApiExampleResolver.Resolve("10 Minutes", 10, namingStrategy));
             Examples.Add(OpenApiExampleResolver.Resolve("One hour", 60, namingStrategy));
@@ -268,7 +268,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         [JsonPropertyName("value")]
         public double Value { get; set; }
 
-        public static EmissionsData FromEmissionsData(GSF.CarbonAware.Models.EmissionsData emissionsData)
+        public static EmissionsData? FromEmissionsData(GSF.CarbonAware.Models.EmissionsData? emissionsData)
         {
             if (emissionsData == null)
             {

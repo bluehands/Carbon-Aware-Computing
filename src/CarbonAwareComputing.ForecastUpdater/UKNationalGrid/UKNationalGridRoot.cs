@@ -12,7 +12,7 @@ public class UKNationalGridData
     public DateTimeOffset To { get; set; }
 
     [JsonPropertyName("intensity")]
-    public Intensity Intensity { get; set; }
+    public Intensity Intensity { get; set; } = null!;
 
     //[JsonPropertyName("generationmix")]
     //public List<Generationmix> Generationmix { get; set; }
@@ -21,7 +21,7 @@ public class UKNationalGridData
 public class Generationmix
 {
     [JsonPropertyName("fuel")]
-    public string Fuel { get; set; }
+    public string Fuel { get; set; } = null!;
 
     [JsonPropertyName("perc")]
     public double? Perc { get; set; }
@@ -33,13 +33,13 @@ public class Intensity
     public int? Forecast { get; set; }
 
     [JsonPropertyName("index")]
-    public string Index { get; set; }
+    public string Index { get; set; } = null!;
 }
 
 public class UKNationalGridRoot
 {
     [JsonPropertyName("data")]
-    public UKNationalGridForecastData Data { get; set; }
+    public UKNationalGridForecastData Data { get; set; } = null!;
 }
 
 public class UKNationalGridForecastData
@@ -54,6 +54,6 @@ public class UKNationalGridForecastData
     //public string Shortname { get; set; }
 
     [JsonPropertyName("data")]
-    public List<UKNationalGridData> Data { get; set; }
+    public List<UKNationalGridData> Data { get; set; } = null!;
 }
 
