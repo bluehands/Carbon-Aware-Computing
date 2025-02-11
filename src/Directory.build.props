@@ -1,0 +1,36 @@
+<Project>
+
+<PropertyGroup>
+  <VersionSuffixLocal />
+  <!--When variable is set we are building a prerelease package-->
+  <VersionSuffixLocal Condition="'$(IsPreRelease)'!='' AND '$(IsPreRelease)'">
+    $(VersionSuffix)
+  </VersionSuffixLocal>
+
+  <!--#region adapt versions here-->
+  <MajorVersion>2</MajorVersion>
+  <MinorAndPatchVersion>1.0</MinorAndPatchVersion>
+  <!--#endregion-->
+
+  <AssemblyVersion>$(MajorVersion).0.0</AssemblyVersion>
+  <Version>$(MajorVersion).$(MinorAndPatchVersion)</Version>
+  <FileVersion>$(Version)</FileVersion>
+  <PackageVersion>$(Version)$(VersionSuffixLocal)</PackageVersion>
+  <Authors>Implemented with 💙 by bluehands</Authors>
+  <Company>bluehands GmbH &amp; Co.mmunication KG</Company>
+  <PackageTags>bluehands; Carbon Aware Computing; Grid Carbon Intensity; Sustainability; Green Software</PackageTags>
+  <Copyright>bluehands GmbH &amp; Co.mmunication KG</Copyright>
+  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  <!--<PackageIcon>FunicularSwitch.png</PackageIcon>-->
+  <RepositoryUrl>https://github.com/bluehands/Carbon-Aware-Computing.git</RepositoryUrl>
+  <PackageProjectUrl>https://www.carbon-aware-computing.com/</PackageProjectUrl>
+  <RepositoryType>Git</RepositoryType>
+  <RepositoryBranch>main</RepositoryBranch>
+
+  <!-- Package specific settings -->
+  <PackageOutputPath>$(OutputPath)</PackageOutputPath>  
+  <ContentTargetFolders>content</ContentTargetFolders>  
+  <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+</PropertyGroup>
+
+</Project>
