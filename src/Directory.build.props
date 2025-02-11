@@ -1,6 +1,7 @@
 <Project>
 
 <PropertyGroup>
+  <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   <VersionSuffixLocal />
   <!--When variable is set we are building a prerelease package-->
   <VersionSuffixLocal Condition="'$(IsPreRelease)'!='' AND '$(IsPreRelease)'">
