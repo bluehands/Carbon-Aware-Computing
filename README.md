@@ -77,7 +77,7 @@ The *CarbonAwareDataProviderOpenData* has a cache of all forecasts. To improve p
 
 ## Hangfire Extension
 
-Hangfire is one of the most used tools for background processing in .NET. Use the *[Hangfire.Community.CarbonAwareExecution](https://github.com/bluehands/Hangfire.Community.CarbonAwareExecution* Extension to enqueue and schedule your jobs.
+Hangfire is one of the most used tools for background processing in .NET. Use the *[Hangfire.Community.CarbonAwareExecution](https://github.com/bluehands/Hangfire.Community.CarbonAwareExecution)* extension to enqueue and schedule your jobs.
 
 ### Installation
 
