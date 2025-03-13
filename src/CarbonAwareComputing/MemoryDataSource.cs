@@ -47,7 +47,7 @@ internal class MemoryDataSource : IForecastDataSource
             _logger.LogDebug("Emission data list is empty");
             return new EmissionsForecast();
         }
-        _logger.LogDebug($"Total emission records retrieved {emissionsData.Count()}");
+        _logger.LogDebug($"Total emission records retrieved {emissionsData.Count}");
 
 
         return new EmissionsForecast()

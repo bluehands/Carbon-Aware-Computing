@@ -50,7 +50,13 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
             return ExecutionTime.NoForecast;
         }
 
-        return ExecutionTime.BestExecutionTime(best.Time, best.Duration, best.Rating);
+        var bestExecutionTime = best.Time;
+        if (best.Time < earliestExecutionTime)
+        {
+            bestExecutionTime = earliestExecutionTime;
+        }
+
+        return ExecutionTime.BestExecutionTime(bestExecutionTime, best.Duration, best.Rating);
     }
 
     public override async Task<GridCarbonIntensity> GetCarbonIntensity(ComputingLocation location, DateTimeOffset now)
