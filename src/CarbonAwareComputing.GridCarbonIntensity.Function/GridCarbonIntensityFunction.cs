@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web.Http;
-using CarbonAware.Model;
 using CarbonAwareComputing.ExecutionForecast.Function;
 using CarbonAwareComputing.Functions;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +45,7 @@ namespace CarbonAwareComputing.GridCarbonIntensity.Function
         {
             try
             {
-                var template = await System.IO.File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
+                var template = await File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
                 var apiKeyPassword = m_ApplicationSettings.Value.ApiKeyPassword!;
                 var mailFrom = m_ApplicationSettings.Value.MailFrom;
                 var tenantId = m_ApplicationSettings.Value.TenantId;
@@ -83,7 +82,7 @@ namespace CarbonAwareComputing.GridCarbonIntensity.Function
                 }
 
                 var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword!);
-                if (string.IsNullOrEmpty(apiKey))
+                if (string.IsNullOrEmpty(mailAddress))
                 {
                     return new StatusCodeResult(403);
                 }
@@ -108,8 +107,8 @@ namespace CarbonAwareComputing.GridCarbonIntensity.Function
 
                 var intensity = await m_Provider.GetCarbonIntensity(computingLocation, DateTimeOffset.Now);
                 return intensity.Match<IActionResult>(
-                    e => new OkObjectResult(e),
-                    _ => new NotFoundResult()
+                    emissionData: e => new OkObjectResult(new EmissionData(e.Location, e.Time, e.Value)),
+                    noData: _ => new NotFoundResult()
 
                 );
             }

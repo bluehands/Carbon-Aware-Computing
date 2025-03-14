@@ -18,3 +18,5 @@ public class AvailableLocation
         }
     }
 }
+
+public record EmissionData(string Location, DateTimeOffset Time, double Value);

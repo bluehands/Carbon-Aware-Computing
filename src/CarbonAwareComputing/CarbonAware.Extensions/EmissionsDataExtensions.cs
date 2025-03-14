@@ -38,8 +38,6 @@ internal static class EmissionsDataExtensions
     /// <exception cref="InvalidOperationException">Can be thrown if the emissions data is not a continuous, chronological time-series.</exception>
     public static IEnumerable<EmissionsData> RollingAverage(this IEnumerable<EmissionsData> data, TimeSpan windowSize = default, DateTimeOffset dataStartAt = default, DateTimeOffset dataEndAt = default, TimeSpan tickSize = default)
     {
-        if (data.Count() == 0){ yield break; }
-
         if (windowSize == default)
         {
            foreach(var d in data){ yield return d; }
@@ -48,8 +46,10 @@ internal static class EmissionsDataExtensions
 
         var q = new Queue<EmissionsData>();
         var _data = data.GetEnumerator();
-        _data.MoveNext();
-        EmissionsData current = _data.Current;
+        if (!_data.MoveNext())
+            yield break;
+
+        var current = _data.Current!;
         EmissionsData? last = null;
 
         if (tickSize == default)
@@ -83,8 +83,7 @@ internal static class EmissionsDataExtensions
                     q.Enqueue(current);
                 }
                 last = current;
-                _data.MoveNext();
-                current = _data.Current;
+                current = _data.MoveNext() ? _data.Current : null;
             }
 
             // Calculate average for everything in the queue if we enqueued enough data points to cover the window
@@ -104,7 +103,8 @@ internal static class EmissionsDataExtensions
             windowEndTime = windowStartTime + windowSize;
 
             // Ensure we stop at the user-specified boundary.
-            if (windowEndTime > dataEndAt)
+            var nextWindowStart = windowStartTime + tickSize;
+            if (nextWindowStart > dataEndAt)
             {
                 yield break;
             }
@@ -149,7 +149,7 @@ internal static class EmissionsDataExtensions
     /// <param name="endTime">The end time of the data to be averaged.</param>
     /// <returns>The average rating of the data for the specified time period</returns>
     /// <exception cref="InvalidOperationException">Can be thrown if the emissions data is not a continuous, chronological time-series.</exception>
-    public static double AverageOverPeriod(this IEnumerable<EmissionsData> data, DateTimeOffset startTime, DateTimeOffset endTime)
+    public static double AverageOverPeriod(this IReadOnlyCollection<EmissionsData> data, DateTimeOffset startTime, DateTimeOffset endTime)
     {
         double rating = 0.0;
         TimeSpan totalDuration = endTime - startTime;

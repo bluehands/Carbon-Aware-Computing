@@ -92,8 +92,8 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     return new StatusCodeResult(403);
                 }
 
-                var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword);
-                if (string.IsNullOrEmpty(apiKey))
+                var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(mailAddress))
                 {
                     return new StatusCodeResult(403);
                 }
@@ -153,7 +153,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                             new()
                             {
                                 Timestamp = bestExecutionTime.ExecutionTime,
-                                Value = bestExecutionTime.Rating
+                                Value = bestExecutionTime.CarbonIntensity
                             }
                         }
                         });

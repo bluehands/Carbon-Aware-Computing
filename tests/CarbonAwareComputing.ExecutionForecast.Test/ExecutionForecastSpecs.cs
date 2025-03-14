@@ -5,11 +5,11 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
 {
     public abstract class ExecutionForecastContextSpecification : ContextSpecification
     {
-        private CarbonAwareDataProviderWithCustomForecast m_Provider;
-        protected string m_ContentFile;
-        protected ComputingLocation m_Location;
+        protected CarbonAwareDataProviderWithCustomForecast m_Provider = null!;
+        protected string m_ContentFile = null!;
+        protected ComputingLocation m_Location = null!;
         protected DateTimeOffset m_Now;
-        protected GridCarbonIntensity m_Intensity;
+        protected GridCarbonIntensity m_Intensity = null!;
 
         protected override void Given()
         {
@@ -51,7 +51,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_provided()
         {
-            Assert.IsTrue(m_Intensity is EmissionData { Value: 151.2 });
+            Assert.IsTrue(m_Intensity is GridCarbonIntensity.EmissionData_ { Value: 151.2 });
         }
     }
 
@@ -69,7 +69,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_not_provided()
         {
-            Assert.IsTrue(m_Intensity is NoData);
+            Assert.IsTrue(m_Intensity is GridCarbonIntensity.NoData_);
         }
     }
 
@@ -87,7 +87,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_not_provided()
         {
-            Assert.IsTrue(m_Intensity is EmissionData { Value: 185.3 });
+            Assert.IsTrue(m_Intensity is GridCarbonIntensity.EmissionData_ { Value: 185.3 });
         }
     }
 
@@ -105,7 +105,91 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_not_provided()
         {
-            Assert.IsTrue(m_Intensity is EmissionData { Value: 0.0 });
+            Assert.IsTrue(m_Intensity is GridCarbonIntensity.EmissionData_ { Value: 0.0 });
+        }
+    }
+
+    [TestClass]
+    public class CalculateBestExecutionTimeSpecs
+    {
+        static readonly ComputingLocation Location = ComputingLocations.Germany;
+        static readonly DateTimeOffset DataStart = new(2025, 03, 14, 0, 0, 0, TimeSpan.Zero);
+        static readonly double[] FiveMinuteTestData = [10, 20, 30, 40, 5];
+        static readonly TimeSpan FiveMinutes = TimeSpan.FromMinutes(5);
+
+        [TestMethod]
+        [DynamicData(nameof(FiveMinuteEmissionDataCases))]
+        public async Task FiveMinuteEmissionData(
+            DateTimeOffset earliestExecutionTime, 
+            DateTimeOffset latestExecutionTime, 
+            TimeSpan estimatedJobDuration,
+            ExecutionTime expectedBestExecutionTime)
+        {
+            var interval = FiveMinutes;
+            var provider = CreateProvider(FiveMinuteTestData, interval);
+
+            var bestExecution = await provider.CalculateBestExecutionTime(Location, earliestExecutionTime, latestExecutionTime, estimatedJobDuration);
+            expectedBestExecutionTime
+                .Switch(
+                    noForecast: n => Assert.AreEqual(n, bestExecution),
+                    bestExecutionTime: expected =>
+                    {
+                        var actual = bestExecution as ExecutionTime.BestExecutionTime_;
+                        Assert.IsNotNull(actual);
+                        Assert.AreEqual(expected.ExecutionTime, actual.ExecutionTime);
+                        Assert.AreEqual(expected.CarbonIntensity, actual.CarbonIntensity);
+                        Assert.AreEqual(expected.Duration, actual.Duration);
+                    });
+
+        }
+
+        static IEnumerable<object[]> FiveMinuteEmissionDataCases =>
+        [
+            TestRow(
+                earliestExecutionTime: DataStart.AddMinutes(10), 
+                latestExecutionTime: DataStart.AddMinutes(20),
+                estimatedJobDuration: TimeSpan.FromMinutes(10), 
+                expectedBestExecutionTime: DataStart.AddMinutes(15), 
+                expectedCarbonIntensity: 22.5
+            )
+        ];
+
+        static object[] TestRow(
+            DateTimeOffset earliestExecutionTime, 
+            DateTimeOffset latestExecutionTime, 
+            TimeSpan estimatedJobDuration,
+            DateTimeOffset expectedBestExecutionTime,
+            double expectedCarbonIntensity) =>
+        [
+            earliestExecutionTime,
+            latestExecutionTime,
+            estimatedJobDuration,
+            ExecutionTime.BestExecutionTime(
+                expectedBestExecutionTime,
+                estimatedJobDuration < FiveMinutes ? FiveMinutes : estimatedJobDuration,
+                expectedCarbonIntensity,
+                0
+            )
+        ];
+
+        static CarbonAwareDataProviderWithCustomForecast CreateProvider(double[] intensities, TimeSpan interval)
+        {
+            var emissionData = EmissionData(intensities, interval);
+            var provider = new CarbonAwareDataProviderWithCustomForecast((_, _) => Task.FromResult(new CachedData(emissionData, DateTimeOffset.Now, Guid.NewGuid().GetHashCode().ToString())));
+            return provider;
+        }
+
+        
+
+        static List<EmissionsData> EmissionData(double[] intensities, TimeSpan interval)
+        {
+            return intensities.Select((d, i) => new EmissionsData()
+            {
+                Duration = interval,
+                Location = Location.Name,
+                Rating = d,
+                Time = DataStart.Add(i * interval)
+            }).ToList();
         }
     }
 }

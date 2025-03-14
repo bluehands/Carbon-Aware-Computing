@@ -8,21 +8,13 @@ namespace CarbonAwareComputing;
 
 public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvider
 {
-    private class EmissionsDataProvider : IEmissionsDataProvider
+    private class EmissionsDataProvider(Func<Location, Task<List<EmissionsData>>> getForecastData)
+        : IEmissionsDataProvider
     {
-        private readonly Func<Location, Task<List<EmissionsData>>> m_GetForecastData;
-
-        public EmissionsDataProvider(Func<Location, Task<List<EmissionsData>>> getForecastData)
-        {
-            m_GetForecastData = getForecastData;
-        }
-        public Task<List<EmissionsData>> GetForecastData(Location location)
-        {
-            return m_GetForecastData(location);
-        }
+        public Task<List<EmissionsData>> GetForecastData(Location location) => getForecastData(location);
     }
 
-    protected IForecastHandler ForecastHandler;
+    protected readonly IForecastHandler ForecastHandler;
     private readonly EmissionsDataProvider m_DataProvider;
     private readonly ConcurrentDictionary<ComputingLocation, EmissionsForecastDataCache> m_EmissionsForecastData = new();
 
@@ -35,7 +27,7 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
 
     public override async Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset latestExecutionTime, TimeSpan estimatedJobDuration)
     {
-        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, earliestExecutionTime, latestExecutionTime - estimatedJobDuration);
+        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, earliestExecutionTime, latestExecutionTime - estimatedJobDuration).ConfigureAwait(false);
         if (!adjustedForecastBoundary.ForecastIsAvailable)
         {
             return ExecutionTime.NoForecast;
@@ -43,8 +35,9 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
 
         var lastStartTime = adjustedForecastBoundary.LastStartTime;
         var earliestStartTime = adjustedForecastBoundary.EarliestStartTime;
-        var forecast = await ForecastHandler.GetCurrentForecastAsync(new[] { location.Name }, earliestStartTime, lastStartTime, Convert.ToInt32(estimatedJobDuration.TotalMinutes));
-        var best = forecast.First().OptimalDataPoints.FirstOrDefault();
+        var forecast = await ForecastHandler.GetCurrentForecastAsync([location.Name], earliestStartTime, lastStartTime, Convert.ToInt32(estimatedJobDuration.TotalMinutes)).ConfigureAwait(false);
+        var forecastForLocation = forecast[0];
+        var best = forecastForLocation.OptimalDataPoints.FirstOrDefault();
         if (best == null)
         {
             return ExecutionTime.NoForecast;
@@ -56,20 +49,18 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
             bestExecutionTime = earliestExecutionTime;
         }
 
-        return ExecutionTime.BestExecutionTime(bestExecutionTime, best.Duration, best.Rating);
+        return ExecutionTime.BestExecutionTime(bestExecutionTime, best.Duration, best.Rating, forecastForLocation.EmissionsDataPoints.First().Rating);
     }
 
     public override async Task<GridCarbonIntensity> GetCarbonIntensity(ComputingLocation location, DateTimeOffset now)
     {
-        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, now, now);
+        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, now, now).ConfigureAwait(false);
         if (!adjustedForecastBoundary.ForecastIsAvailable)
         {
-            return GridCarbonIntensity.NoData();
+            return GridCarbonIntensity.NoData;
         }
 
-        var forecastData = await m_DataProvider.GetForecastData(new Location() { Name = location.Name });
-
-
+        var forecastData = await m_DataProvider.GetForecastData(new Location() { Name = location.Name }).ConfigureAwait(false);
         for (int i = forecastData.Count - 1; i >= 0; i--)
         {
             var f = forecastData[i];
@@ -78,7 +69,7 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
                 return GridCarbonIntensity.EmissionData(f.Location, f.Time, f.Rating);
             }
         }
-        return GridCarbonIntensity.NoData();
+        return GridCarbonIntensity.NoData;
 
     }
 
@@ -91,11 +82,11 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
     {
         var computingLocation = new ComputingLocation(location.Name ?? "de");
         var emissionsForecastDataCache = GetEmissionsForecastDataCache(computingLocation);
-        return await emissionsForecastDataCache.GetForecastData();
+        return await emissionsForecastDataCache.GetForecastData().ConfigureAwait(false);
     }
     private async Task<(bool ForecastIsAvailable, DateTimeOffset EarliestStartTime, DateTimeOffset LastStartTime)> TryAdjustForecastBoundary(ComputingLocation location, DateTimeOffset earliestStartTime, DateTimeOffset lastStartTime)
     {
-        var boundary = await GetDataBoundary(location);
+        var boundary = await GetDataBoundary(location).ConfigureAwait(false);
         if (lastStartTime > boundary.EndTime)
         {
             lastStartTime = boundary.EndTime;
@@ -115,15 +106,15 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
     private async Task<DataBoundary> GetDataBoundary(ComputingLocation computingLocation)
     {
         var emissionsForecastDataCache = GetEmissionsForecastDataCache(computingLocation);
-        return await emissionsForecastDataCache.GetDataBoundary();
+        return await emissionsForecastDataCache.GetDataBoundary().ConfigureAwait(false);
     }
     private EmissionsForecastDataCache GetEmissionsForecastDataCache(ComputingLocation computingLocation)
     {
-        if (m_EmissionsForecastData.ContainsKey(computingLocation))
+        if (m_EmissionsForecastData.TryGetValue(computingLocation, out var dataCache))
         {
-            return m_EmissionsForecastData[computingLocation];
+            return dataCache;
         }
-        var cache = new EmissionsForecastDataCache(async (c, l) => await FillEmissionsDataCache(l, c), computingLocation);
+        var cache = new EmissionsForecastDataCache(async (c, l) => await FillEmissionsDataCache(l, c).ConfigureAwait(false), computingLocation);
         m_EmissionsForecastData[computingLocation] = cache;
         return cache;
     }

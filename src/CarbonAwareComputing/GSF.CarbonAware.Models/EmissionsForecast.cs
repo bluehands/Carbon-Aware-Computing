@@ -15,7 +15,7 @@ public record EmissionsForecast
             GeneratedAt = emissionsForecast.GeneratedAt,
             EmissionsDataPoints = emissionsForecast.ForecastData.Select(x => (EmissionsData) x),
             OptimalDataPoints = emissionsForecast.OptimalDataPoints.Select(x => (EmissionsData) x),
-            Location = emissionsForecast.Location.Name!,
+            Location = emissionsForecast.Location.Name!
         };
     }
 }

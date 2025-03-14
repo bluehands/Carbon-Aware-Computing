@@ -47,7 +47,7 @@ public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
             eTag = "\"" + eTag + "\"";
         }
         httpClient.DefaultRequestHeaders.IfNoneMatch.Add(new EntityTagHeaderValue(eTag));
-        var response = await httpClient.GetAsync(uri);
+        var response = await httpClient.GetAsync(uri).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             return currentCachedData;
@@ -56,7 +56,7 @@ public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
         var eTagHeader = response.Headers.FirstOrDefault(h => h.Key.Equals("ETag", StringComparison.InvariantCultureIgnoreCase));
         eTag = eTagHeader.Value.FirstOrDefault();
 
-        var json = await response.Content.ReadAsStringAsync();
+        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var jsonFile = System.Text.Json.JsonSerializer.Deserialize<EmissionsForecastJsonFile>(json)!;
         var emissionsData = jsonFile.Emissions.Select(e => new EmissionsData()
         {
@@ -134,7 +134,7 @@ public class CarbonAwareDataProviderWattTime : CarbonAwareDataProviderCachedData
         }
 
         var ba = location.Name;
-        var data = await client.GetCurrentForecastAsync(ba);
+        var data = await client.GetCurrentForecastAsync(ba).ConfigureAwait(false);
 
         var forecastData = data.ForecastData.ToList();
         var defaultDuration = GetDurationFromGridEmissionDataPoints(data.ForecastData);
