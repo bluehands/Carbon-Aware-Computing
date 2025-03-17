@@ -25,17 +25,16 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
         ForecastHandler = new ForecastHandler(new NullLogger<ForecastHandler>(), memoryDataSource);
     }
 
-    public override async Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset latestExecutionTime, TimeSpan estimatedJobDuration)
+    public override async Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset jobShouldBeFinishedAt, TimeSpan estimatedJobDuration)
     {
-        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, earliestExecutionTime, latestExecutionTime - estimatedJobDuration).ConfigureAwait(false);
-        if (!adjustedForecastBoundary.ForecastIsAvailable)
+        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, earliestExecutionTime, jobShouldBeFinishedAt).ConfigureAwait(false);
+        if (!adjustedForecastBoundary.ForecastIsAvailable || jobShouldBeFinishedAt - adjustedForecastBoundary.EarliestStartTime < estimatedJobDuration)
         {
             return ExecutionTime.NoForecast;
         }
 
-        var lastStartTime = adjustedForecastBoundary.LastStartTime;
         var earliestStartTime = adjustedForecastBoundary.EarliestStartTime;
-        var forecast = await ForecastHandler.GetCurrentForecastAsync([location.Name], earliestStartTime, lastStartTime, Convert.ToInt32(estimatedJobDuration.TotalMinutes)).ConfigureAwait(false);
+        var forecast = await ForecastHandler.GetCurrentForecastAsync([location.Name], earliestStartTime, adjustedForecastBoundary.DataEndTime, Convert.ToInt32(estimatedJobDuration.TotalMinutes)).ConfigureAwait(false);
         var forecastForLocation = forecast[0];
         var best = forecastForLocation.OptimalDataPoints.FirstOrDefault();
         if (best == null)
@@ -84,12 +83,13 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
         var emissionsForecastDataCache = GetEmissionsForecastDataCache(computingLocation);
         return await emissionsForecastDataCache.GetForecastData().ConfigureAwait(false);
     }
-    private async Task<(bool ForecastIsAvailable, DateTimeOffset EarliestStartTime, DateTimeOffset LastStartTime)> TryAdjustForecastBoundary(ComputingLocation location, DateTimeOffset earliestStartTime, DateTimeOffset lastStartTime)
+    private async Task<(bool ForecastIsAvailable, DateTimeOffset EarliestStartTime, DateTimeOffset? DataEndTime)> TryAdjustForecastBoundary(ComputingLocation location, DateTimeOffset earliestStartTime, DateTimeOffset jobShouldBeFinishedAt)
     {
         var boundary = await GetDataBoundary(location).ConfigureAwait(false);
-        if (lastStartTime > boundary.EndTime)
+        DateTimeOffset? dataEndTime = jobShouldBeFinishedAt;
+        if (jobShouldBeFinishedAt > boundary.EndTime)
         {
-            lastStartTime = boundary.EndTime;
+            dataEndTime = null; //use all data
         }
 
         if (earliestStartTime < boundary.StartTime)
@@ -97,11 +97,11 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
             earliestStartTime = boundary.StartTime;
         }
 
-        if (earliestStartTime > lastStartTime)
+        if (earliestStartTime > boundary.EndTime) //job start after data interval
         {
-            return (false, earliestStartTime, lastStartTime);
+            return (false, earliestStartTime, dataEndTime);
         }
-        return (true, earliestStartTime, lastStartTime);
+        return (true, earliestStartTime, dataEndTime);
     }
     private async Task<DataBoundary> GetDataBoundary(ComputingLocation computingLocation)
     {

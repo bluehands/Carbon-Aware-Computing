@@ -1,4 +1,3 @@
-using CarbonAware;
 using CarbonAware.Exceptions;
 using CarbonAware.Extensions;
 using CarbonAware.Interfaces;
@@ -71,15 +70,20 @@ internal sealed class ForecastHandler : IForecastHandler
         var firstDataPoint = forecast.ForecastData.First();        
         var lastDataPoint = forecast.ForecastData[^1];
         var dataStartAt = startAt ?? firstDataPoint.Time;
-        var dataEndAt = (endAt ?? lastDataPoint.Time) + lastDataPoint.Duration;
+        var dataEndAt = endAt ?? lastDataPoint.Time;
         forecast.Validate(dataStartAt, dataEndAt);
-        
-        var filteredAverage = forecast.ForecastData
-            .RollingAverage(windowSize, dataStartAt, dataEndAt)
-            .FilterByDuration(dataStartAt, dataEndAt)
-            .ToArray();
-        
-        forecast.ForecastData = filteredAverage;
+
+        var emissionsData = forecast.ForecastData
+            .RollingAverage(windowSize, dataStartAt, dataEndAt);
+
+        if (endAt != null)
+        {
+            //remove data at end where duration would exceed data interval
+            emissionsData = emissionsData
+                .Where(e => e.Time + e.Duration <= endAt);
+        }
+
+        forecast.ForecastData = emissionsData.ToArray();
         forecast.OptimalDataPoints = forecast.ForecastData.GetOptimalEmissions();
 
         return forecast;

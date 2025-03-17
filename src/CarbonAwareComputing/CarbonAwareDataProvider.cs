@@ -4,7 +4,7 @@
 namespace CarbonAwareComputing;
 public abstract class CarbonAwareDataProvider
 {
-    public abstract Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset latestExecutionTime, TimeSpan estimatedJobDuration);
+    public abstract Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset jobShouldBeFinishedAt, TimeSpan estimatedJobDuration);
     public abstract Task<GridCarbonIntensity> GetCarbonIntensity(ComputingLocation location, DateTimeOffset now);
 }
 
