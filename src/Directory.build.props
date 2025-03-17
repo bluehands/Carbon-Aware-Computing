@@ -9,8 +9,8 @@
   </VersionSuffixLocal>
 
   <!--#region adapt versions here-->
-  <MajorVersion>2</MajorVersion>
-  <MinorAndPatchVersion>1.1</MinorAndPatchVersion>
+  <MajorVersion>3</MajorVersion>
+  <MinorAndPatchVersion>0.0</MinorAndPatchVersion>
   <!--#endregion-->
 
   <AssemblyVersion>$(MajorVersion).0.0</AssemblyVersion>

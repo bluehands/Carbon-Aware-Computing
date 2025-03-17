@@ -25,7 +25,7 @@ public class ForecastStatisticsClient
             var tableClient = new TableClient(m_BaseUri, m_TableName, credentials);
 
             var first = emissionsForecast.ForecastData.First();
-            var last = emissionsForecast.ForecastData.Last();
+            var last = emissionsForecast.ForecastData[^1];
             var tableEntity = new TableEntity(PartitionKey, location.Name)
             {
                 { "GeneratedAt", emissionsForecast.GeneratedAt },

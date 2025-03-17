@@ -1,4 +1,3 @@
-using CarbonAware;
 using CarbonAware.Exceptions;
 using CarbonAware.Extensions;
 using CarbonAware.Interfaces;
@@ -26,15 +25,14 @@ internal sealed class ForecastHandler : IForecastHandler
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<EmissionsForecast>> GetCurrentForecastAsync(string[] locations, DateTimeOffset? start = null, DateTimeOffset? end = null, int? duration = null)
+    public async Task<IReadOnlyList<EmissionsForecast>> GetCurrentForecastAsync(string[] locations, DateTimeOffset? start = null, DateTimeOffset? end = null, int? duration = null)
     {
         try
         {
-
             var forecasts = new List<EmissionsForecast>();
             foreach (var location in locations)
             {
-                var forecast = await _forecastDataSource.GetCurrentCarbonIntensityForecastAsync(new Location() { Name = location });
+                var forecast = await _forecastDataSource.GetCurrentCarbonIntensityForecastAsync(new Location() { Name = location }).ConfigureAwait(false);
                 var emissionsForecast = ProcessAndValidateForecast(forecast, duration.HasValue ? TimeSpan.FromMinutes(duration.Value) : TimeSpan.Zero, start, end);
                 forecasts.Add(emissionsForecast);
             }
@@ -56,7 +54,7 @@ internal sealed class ForecastHandler : IForecastHandler
 
         try
         {
-            var forecast = await _forecastDataSource.GetCarbonIntensityForecastAsync(new Location() { Name = location }, requestedAt.Value);
+            var forecast = await _forecastDataSource.GetCarbonIntensityForecastAsync(new Location() { Name = location }, requestedAt.Value).ConfigureAwait(false);
             var emissionsForecast = ProcessAndValidateForecast(forecast, duration.HasValue ? TimeSpan.FromMinutes(duration.Value) : TimeSpan.Zero, start, end);
             return emissionsForecast;
         }
@@ -69,14 +67,25 @@ internal sealed class ForecastHandler : IForecastHandler
     private static EmissionsForecast ProcessAndValidateForecast(global::CarbonAware.Model.EmissionsForecast forecast, TimeSpan duration, DateTimeOffset? startAt, DateTimeOffset? endAt)
     {
         var windowSize = duration;
-        var firstDataPoint = forecast.ForecastData.First();
-        var lastDataPoint = forecast.ForecastData.Last();
+        var firstDataPoint = forecast.ForecastData.First();        
+        var lastDataPoint = forecast.ForecastData[^1];
         var dataStartAt = startAt ?? firstDataPoint.Time;
-        var dataEndAt = endAt ?? lastDataPoint.Time + lastDataPoint.Duration;
+        var dataEndAt = endAt ?? lastDataPoint.Time;
         forecast.Validate(dataStartAt, dataEndAt);
-        forecast.ForecastData = IntervalHelper.FilterByDuration(forecast.ForecastData, dataStartAt, dataEndAt);
-        forecast.ForecastData = forecast.ForecastData.RollingAverage(windowSize, dataStartAt, dataEndAt);
-        forecast.OptimalDataPoints = CarbonAwareOptimalEmission.GetOptimalEmissions(forecast.ForecastData.ToArray());
+
+        var emissionsData = forecast.ForecastData
+            .RollingAverage(windowSize, dataStartAt, dataEndAt);
+
+        if (endAt != null)
+        {
+            //remove data at end where duration would exceed data interval
+            emissionsData = emissionsData
+                .Where(e => e.Time + e.Duration <= endAt);
+        }
+
+        forecast.ForecastData = emissionsData.ToArray();
+        forecast.OptimalDataPoints = forecast.ForecastData.GetOptimalEmissions();
+
         return forecast;
     }
 }

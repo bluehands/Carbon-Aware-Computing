@@ -4,7 +4,7 @@ namespace GSF.CarbonAware.Handlers;
 
 internal static class CarbonAwareOptimalEmission
 {
-    public static IReadOnlyCollection<EmissionsData> GetOptimalEmissions(IReadOnlyCollection<EmissionsData> emissionsData)
+    public static IReadOnlyCollection<EmissionsData> GetOptimalEmissions(this IReadOnlyCollection<EmissionsData> emissionsData)
     {
         var bestResult = emissionsData.MinBy(x => x.Rating);
         if (bestResult != null)

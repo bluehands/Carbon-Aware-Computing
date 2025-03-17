@@ -50,7 +50,7 @@ internal class WattTimeDataSource : IEmissionsDataSource, IForecastDataSource
         List<EmissionsData> result = new ();
         foreach (var location in locations)
         {
-            IEnumerable<EmissionsData> interimResult = await GetCarbonIntensityAsync(location, periodStartTime, periodEndTime);
+            IEnumerable<EmissionsData> interimResult = await GetCarbonIntensityAsync(location, periodStartTime, periodEndTime).ConfigureAwait(false);
             result.AddRange(interimResult);
         }
         return result;
@@ -60,9 +60,9 @@ internal class WattTimeDataSource : IEmissionsDataSource, IForecastDataSource
     public async Task<IEnumerable<EmissionsData>> GetCarbonIntensityAsync(Location location, DateTimeOffset periodStartTime, DateTimeOffset periodEndTime)
     {
         Logger.LogInformation($"Getting carbon intensity for location {location} for period {periodStartTime} to {periodEndTime}.");
-        var balancingAuthority = await this.GetBalancingAuthority(location);
+        var balancingAuthority = await this.GetBalancingAuthority(location).ConfigureAwait(false);
         var (newStartTime, newEndTime) = IntervalHelper.ExtendTimeByWindow(periodStartTime, periodEndTime, MinSamplingWindow);
-        var data = await this.WattTimeClient.GetDataAsync(balancingAuthority, newStartTime, newEndTime);
+        var data = await this.WattTimeClient.GetDataAsync(balancingAuthority, newStartTime, newEndTime).ConfigureAwait(false);
         if (Logger.IsEnabled(LogLevel.Debug))
         {
             Logger.LogDebug($"Found {data.Count()} total forecasts for location {location} for period {periodStartTime} to {periodEndTime}.");
@@ -81,18 +81,18 @@ internal class WattTimeDataSource : IEmissionsDataSource, IForecastDataSource
     public async Task<EmissionsForecast> GetCurrentCarbonIntensityForecastAsync(Location location)
     {
         this.Logger.LogInformation($"Getting carbon intensity forecast for location {location}");
-        var balancingAuthority = await this.GetBalancingAuthority(location);
-        var forecast = await this.WattTimeClient.GetCurrentForecastAsync(balancingAuthority); 
-        return ForecastToEmissionsForecast(forecast, location, DateTimeOffset.UtcNow);
+        var balancingAuthority = await this.GetBalancingAuthority(location).ConfigureAwait(false);
+        var forecast = await this.WattTimeClient.GetCurrentForecastAsync(balancingAuthority).ConfigureAwait(false); 
+        return ForecastToEmissionsForecast(forecast, location);
     }
 
     /// <inheritdoc />
     public async Task<EmissionsForecast> GetCarbonIntensityForecastAsync(Location location, DateTimeOffset requestedAt)
     {
         this.Logger.LogInformation($"Getting carbon intensity forecast for location {location} requested at {requestedAt}");
-        var balancingAuthority = await this.GetBalancingAuthority(location);
+        var balancingAuthority = await this.GetBalancingAuthority(location).ConfigureAwait(false);
         var roundedRequestedAt = TimeToLowestIncrement(requestedAt);
-        var forecast = await this.WattTimeClient.GetForecastOnDateAsync(balancingAuthority, roundedRequestedAt);
+        var forecast = await this.WattTimeClient.GetForecastOnDateAsync(balancingAuthority, roundedRequestedAt).ConfigureAwait(false);
         if (forecast == null)
         {
             var ex = new ArgumentException($"No forecast was generated at the requested time {roundedRequestedAt}");
@@ -100,10 +100,10 @@ internal class WattTimeDataSource : IEmissionsDataSource, IForecastDataSource
             throw ex;
         }
         // keep input from the user.
-        return ForecastToEmissionsForecast(forecast, location, requestedAt); 
+        return ForecastToEmissionsForecast(forecast, location); 
     }
 
-    private EmissionsForecast ForecastToEmissionsForecast(Forecast forecast, Location location, DateTimeOffset requestedAt) 
+    private EmissionsForecast ForecastToEmissionsForecast(Forecast forecast, Location location) 
     {
         var duration = GetDurationFromGridEmissionDataPoints(forecast.ForecastData);
         var forecastData = forecast.ForecastData.Select(e => new EmissionsData()
@@ -112,7 +112,8 @@ internal class WattTimeDataSource : IEmissionsDataSource, IForecastDataSource
             Rating = ConvertMoerToGramsPerKilowattHour(e.Value),
             Time = e.PointTime,
             Duration = duration
-        });
+        }).ToArray();
+        
         var emissionsForecast = new EmissionsForecast()
         {
             GeneratedAt = forecast.GeneratedAt,
@@ -176,8 +177,8 @@ internal class WattTimeDataSource : IEmissionsDataSource, IForecastDataSource
         BalancingAuthority balancingAuthority;
         try
         {
-            var geolocation = await this.LocationSource.ToGeopositionLocationAsync(location);
-            balancingAuthority = await WattTimeClient.GetBalancingAuthorityAsync(geolocation.LatitudeAsCultureInvariantString(), geolocation.LongitudeAsCultureInvariantString());
+            var geolocation = await this.LocationSource.ToGeopositionLocationAsync(location).ConfigureAwait(false);
+            balancingAuthority = await WattTimeClient.GetBalancingAuthorityAsync(geolocation.LatitudeAsCultureInvariantString(), geolocation.LongitudeAsCultureInvariantString()).ConfigureAwait(false);
         }
         catch(Exception ex) when (ex is LocationConversionException ||  ex is WattTimeClientHttpException)
         {

@@ -18,13 +18,13 @@ public abstract class JsonEmissionsDataProviderBase : ICachedEmissionsDataProvid
     {
         var computingLocation = new ComputingLocation(location.Name ?? "de");
         var emissionsForecastDataCache = GetEmissionsForecastDataCache(computingLocation);
-        return await emissionsForecastDataCache.GetForecastData();
+        return await emissionsForecastDataCache.GetForecastData().ConfigureAwait(false);
     }
 
     public async Task<DataBoundary> GetDataBoundary(ComputingLocation computingLocation)
     {
         var emissionsForecastDataCache = GetEmissionsForecastDataCache(computingLocation);
-        return await emissionsForecastDataCache.GetDataBoundary();
+        return await emissionsForecastDataCache.GetDataBoundary().ConfigureAwait(false);
     }
     private EmissionsForecastDataCache GetEmissionsForecastDataCache(ComputingLocation computingLocation)
     {
@@ -32,7 +32,7 @@ public abstract class JsonEmissionsDataProviderBase : ICachedEmissionsDataProvid
         {
             return m_EmissionsForecastData[computingLocation];
         }
-        var cache = new EmissionsForecastDataCache(async (c, l) => await FillEmissionsDataCache(l, c), computingLocation);
+        var cache = new EmissionsForecastDataCache(async (c, l) => await FillEmissionsDataCache(l, c).ConfigureAwait(false), computingLocation);
         m_EmissionsForecastData[computingLocation] = cache;
         return cache;
     }
@@ -82,7 +82,7 @@ public class JsonEmissionsDataProvider : JsonEmissionsDataProviderBase, IDisposa
             eTag = "\"" + eTag + "\"";
         }
         m_HttpClient.DefaultRequestHeaders.IfNoneMatch.Add(new EntityTagHeaderValue(eTag));
-        var response = await m_HttpClient.GetAsync(uri);
+        var response = await m_HttpClient.GetAsync(uri).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             return currentCachedData;
@@ -91,7 +91,7 @@ public class JsonEmissionsDataProvider : JsonEmissionsDataProviderBase, IDisposa
         var eTagHeader = response.Headers.FirstOrDefault(h => h.Key.Equals("ETag", StringComparison.InvariantCultureIgnoreCase));
         eTag = eTagHeader.Value.FirstOrDefault();
 
-        var json = await response.Content.ReadAsStringAsync();
+        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var jsonFile = System.Text.Json.JsonSerializer.Deserialize<EmissionsForecastJsonFile>(json)!;
         var emissionsData = jsonFile.Emissions.Select(e => new EmissionsData()
         {
@@ -117,7 +117,7 @@ public class OfflineJsonEmissionsDataProvider : JsonEmissionsDataProviderBase
     }
     protected override async Task<CachedData> FillEmissionsDataCache(ComputingLocation location, CachedData currentCachedData)
     {
-        var emissionsData = await m_GetEmissionData.Invoke(location);
+        var emissionsData = await m_GetEmissionData.Invoke(location).ConfigureAwait(false);
         return new CachedData(emissionsData, DateTimeOffset.Now, currentCachedData.Version);
     }
 }

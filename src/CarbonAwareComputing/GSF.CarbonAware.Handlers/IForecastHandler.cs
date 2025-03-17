@@ -12,7 +12,8 @@ public interface IForecastHandler
     /// <param name="dataEndAt">End time boundary of forecasted data points. Ignores current forecast data points after this time (ex: 2022-03-01T18:30:00Z)</param>
     /// <param name="windowSize">The estimated duration (in minutes) of the workload.</param>
     /// <returns>List of current <see cref="EmissionsForecast"/> by location.</returns>
-    Task<IEnumerable<EmissionsForecast>> GetCurrentForecastAsync(string[] locations, DateTimeOffset? dataStartAt = null, DateTimeOffset? dataEndAt = null, int? windowSize = null);
+    Task<IReadOnlyList<EmissionsForecast>> GetCurrentForecastAsync(string[] locations,
+        DateTimeOffset? dataStartAt = null, DateTimeOffset? dataEndAt = null, int? windowSize = null);
 
     /// <summary>
     /// Retrieves the historical forecasted data for the given date range and calculates the optimal marginal carbon intensity window.

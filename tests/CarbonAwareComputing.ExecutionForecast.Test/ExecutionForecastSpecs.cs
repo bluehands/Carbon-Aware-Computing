@@ -5,11 +5,11 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
 {
     public abstract class ExecutionForecastContextSpecification : ContextSpecification
     {
-        private CarbonAwareDataProviderWithCustomForecast m_Provider;
-        protected string m_ContentFile;
-        protected ComputingLocation m_Location;
+        protected CarbonAwareDataProviderWithCustomForecast m_Provider = null!;
+        protected string m_ContentFile = null!;
+        protected ComputingLocation m_Location = null!;
         protected DateTimeOffset m_Now;
-        protected GridCarbonIntensity m_Intensity;
+        protected GridCarbonIntensity m_Intensity = null!;
 
         protected override void Given()
         {
@@ -51,7 +51,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_provided()
         {
-            Assert.IsTrue(m_Intensity is EmissionData { Value: 151.2 });
+            Assert.IsTrue(m_Intensity is GridCarbonIntensity.EmissionData_ { Value: 151.2 });
         }
     }
 
@@ -69,7 +69,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_not_provided()
         {
-            Assert.IsTrue(m_Intensity is NoData);
+            Assert.IsTrue(m_Intensity is GridCarbonIntensity.NoData_);
         }
     }
 
@@ -87,7 +87,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_not_provided()
         {
-            Assert.IsTrue(m_Intensity is EmissionData { Value: 185.3 });
+            Assert.IsTrue(m_Intensity is GridCarbonIntensity.EmissionData_ { Value: 185.3 });
         }
     }
 
@@ -105,7 +105,189 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [TestMethod]
         public void Then_the_intensity_is_not_provided()
         {
-            Assert.IsTrue(m_Intensity is EmissionData { Value: 0.0 });
+            Assert.IsTrue(m_Intensity is GridCarbonIntensity.EmissionData_ { Value: 0.0 });
+        }
+    }
+
+    [TestClass]
+    public class CalculateBestExecutionTimeSpecs
+    {
+        static readonly ComputingLocation Location = ComputingLocations.Germany;
+        static readonly DateTimeOffset DataStart = new(2025, 03, 14, 0, 0, 0, TimeSpan.Zero);
+        static readonly double[] FiveMinuteTestData = [/*0*/10, /*5*/20, /*10*/30, /*15*/50, /*20*/5, /*25*/15, /*30*/100, /*35*/10];
+        static readonly TimeSpan FiveMinutes = TimeSpan.FromMinutes(5);
+
+        [TestMethod]
+        [DynamicData(nameof(FiveMinuteEmissionDataCases))]
+        public async Task FiveMinuteEmissionData(
+            string testCase,
+            DateTimeOffset earliestExecutionTime, 
+            DateTimeOffset jobShouldBeFinishedAt, 
+            TimeSpan estimatedJobDuration,
+            ExecutionTime expectedBestExecutionTime)
+        {
+            var provider = CreateProvider(FiveMinuteTestData, FiveMinutes);
+
+            var bestExecution = await provider.CalculateBestExecutionTime(Location, earliestExecutionTime, jobShouldBeFinishedAt, estimatedJobDuration);
+            expectedBestExecutionTime
+                .Switch(
+                    noForecast: n => Assert.AreEqual(n, bestExecution),
+                    bestExecutionTime: expected =>
+                    {
+                        var actual = bestExecution as ExecutionTime.BestExecutionTime_;
+                        Assert.IsNotNull(actual);
+                        Assert.AreEqual(expected.ExecutionTime, actual.ExecutionTime);
+                        Assert.AreEqual(expected.CarbonIntensity, actual.CarbonIntensity);
+                        Assert.AreEqual(expected.Duration, actual.Duration);
+                    });
+
+        }
+
+        static IEnumerable<object[]> FiveMinuteEmissionDataCases =>
+        [
+            TestRowNoForecast(
+                "Execution range before data start",
+                earliestExecutionTime: DataStart.AddMinutes(-40),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(9),
+                estimatedJobDuration: TimeSpan.FromMinutes(10)
+            ),
+            TestRow(
+                "Execution range starts before data start with single possible execution time",
+                earliestExecutionTime: DataStart.AddMinutes(-40),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(10),
+                estimatedJobDuration: TimeSpan.FromMinutes(10),
+                expectedBestExecutionTime: DataStart.AddMinutes(0),
+                expectedCarbonIntensity: 15
+            ),
+            TestRow(
+                "Execution range starts before data start",
+                earliestExecutionTime: DataStart.AddMinutes(-20),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(20),
+                estimatedJobDuration: TimeSpan.FromMinutes(10),
+                expectedBestExecutionTime: DataStart.AddMinutes(0),
+                expectedCarbonIntensity: 15
+            ),
+            TestRow(
+                "Execution range within data interval",
+                earliestExecutionTime: DataStart.AddMinutes(5),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(25),
+                estimatedJobDuration: TimeSpan.FromMinutes(10),
+                expectedBestExecutionTime: DataStart.AddMinutes(5),
+                expectedCarbonIntensity: 25
+            ),
+            TestRow(
+                "Execution range greater than data interval",
+                earliestExecutionTime: DataStart.AddMinutes(-40),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
+                estimatedJobDuration: TimeSpan.FromMinutes(10),
+                expectedBestExecutionTime: DataStart.AddMinutes(20),
+                expectedCarbonIntensity: 10
+            ),
+            TestRow(
+                "Execution starts within, end after data interval",
+                earliestExecutionTime: DataStart.AddMinutes(25),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
+                estimatedJobDuration: TimeSpan.FromMinutes(10),
+                expectedBestExecutionTime: DataStart.AddMinutes(30),
+                expectedCarbonIntensity: 55
+            ),
+            TestRow(
+                "Execution starts within, end after data interval, start between data points",
+                earliestExecutionTime: DataStart.AddMinutes(21),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
+                estimatedJobDuration: TimeSpan.FromMinutes(10),
+                expectedBestExecutionTime: DataStart.AddMinutes(21),
+                expectedCarbonIntensity: 19.5
+            ),
+            TestRowNoForecast(
+                "Execution starts after data interval",
+                earliestExecutionTime: DataStart.AddMinutes(33),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
+                estimatedJobDuration: TimeSpan.FromMinutes(10)
+            ),
+            TestRow(
+                "Job shorter than data resolution",
+                earliestExecutionTime: DataStart,
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
+                estimatedJobDuration: TimeSpan.FromSeconds(5),
+                expectedBestExecutionTime: DataStart.AddMinutes(20),
+                expectedCarbonIntensity: 5
+            ),
+            TestRow(
+                "Job shorter than data resolution with start not matching data interval",
+                earliestExecutionTime: DataStart.AddMinutes(21),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
+                estimatedJobDuration: TimeSpan.FromSeconds(5),
+                expectedBestExecutionTime: DataStart.AddMinutes(21),
+                expectedCarbonIntensity: 5
+            ),
+            TestRowNoForecast(
+                "Job longer than data interval",
+                earliestExecutionTime: DataStart,
+                jobShouldBeFinishedAt: DataStart.AddHours(5),
+                estimatedJobDuration: TimeSpan.FromHours(1)
+            ),
+            TestRow(
+                "18 minute job",
+                earliestExecutionTime: DataStart,
+                jobShouldBeFinishedAt: DataStart.AddHours(2),
+                estimatedJobDuration: TimeSpan.FromMinutes(18), 
+                expectedBestExecutionTime: DataStart.AddMinutes(0), 
+                expectedCarbonIntensity: 25
+            )
+        ];
+
+        static object[] TestRow(
+            string testCase,
+            DateTimeOffset earliestExecutionTime, 
+            DateTimeOffset jobShouldBeFinishedAt, 
+            TimeSpan estimatedJobDuration,
+            DateTimeOffset expectedBestExecutionTime,
+            double expectedCarbonIntensity) =>
+        [
+            testCase,
+            earliestExecutionTime,
+            jobShouldBeFinishedAt,
+            estimatedJobDuration,
+            ExecutionTime.BestExecutionTime(
+                expectedBestExecutionTime,
+                estimatedJobDuration < FiveMinutes ? FiveMinutes : estimatedJobDuration,
+                expectedCarbonIntensity,
+                0
+            )
+        ];
+
+        static object[] TestRowNoForecast(
+            string testCase,
+            DateTimeOffset earliestExecutionTime, 
+            DateTimeOffset jobShouldBeFinishedAt, 
+            TimeSpan estimatedJobDuration) =>
+        [
+            testCase,
+            earliestExecutionTime,
+            jobShouldBeFinishedAt,
+            estimatedJobDuration,
+            ExecutionTime.NoForecast
+        ];
+
+        static CarbonAwareDataProviderWithCustomForecast CreateProvider(double[] intensities, TimeSpan interval)
+        {
+            var emissionData = EmissionData(intensities, interval);
+            var provider = new CarbonAwareDataProviderWithCustomForecast((_, _) => Task.FromResult(new CachedData(emissionData, DateTimeOffset.Now, Guid.NewGuid().GetHashCode().ToString())));
+            return provider;
+        }
+
+        
+
+        static List<EmissionsData> EmissionData(double[] intensities, TimeSpan interval)
+        {
+            return intensities.Select((d, i) => new EmissionsData()
+            {
+                Duration = interval,
+                Location = Location.Name,
+                Rating = d,
+                Time = DataStart.Add(i * interval)
+            }).ToList();
         }
     }
 }
