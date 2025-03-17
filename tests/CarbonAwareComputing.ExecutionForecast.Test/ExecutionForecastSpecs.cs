@@ -122,13 +122,13 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         public async Task FiveMinuteEmissionData(
             string testCase,
             DateTimeOffset earliestExecutionTime, 
-            DateTimeOffset latestExecutionTime, 
+            DateTimeOffset jobShouldBeFinishedAt, 
             TimeSpan estimatedJobDuration,
             ExecutionTime expectedBestExecutionTime)
         {
             var provider = CreateProvider(FiveMinuteTestData, FiveMinutes);
 
-            var bestExecution = await provider.CalculateBestExecutionTime(Location, earliestExecutionTime, latestExecutionTime, estimatedJobDuration);
+            var bestExecution = await provider.CalculateBestExecutionTime(Location, earliestExecutionTime, jobShouldBeFinishedAt, estimatedJobDuration);
             expectedBestExecutionTime
                 .Switch(
                     noForecast: n => Assert.AreEqual(n, bestExecution),
@@ -148,13 +148,13 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRowNoForecast(
                 "Execution range before data start",
                 earliestExecutionTime: DataStart.AddMinutes(-40),
-                latestExecutionTime: DataStart.AddMinutes(9),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(9),
                 estimatedJobDuration: TimeSpan.FromMinutes(10)
             ),
             TestRow(
                 "Execution range starts before data start with single possible execution time",
                 earliestExecutionTime: DataStart.AddMinutes(-40),
-                latestExecutionTime: DataStart.AddMinutes(10),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(10),
                 estimatedJobDuration: TimeSpan.FromMinutes(10),
                 expectedBestExecutionTime: DataStart.AddMinutes(0),
                 expectedCarbonIntensity: 15
@@ -162,7 +162,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRow(
                 "Execution range starts before data start",
                 earliestExecutionTime: DataStart.AddMinutes(-20),
-                latestExecutionTime: DataStart.AddMinutes(20),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(20),
                 estimatedJobDuration: TimeSpan.FromMinutes(10),
                 expectedBestExecutionTime: DataStart.AddMinutes(0),
                 expectedCarbonIntensity: 15
@@ -170,7 +170,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRow(
                 "Execution range within data interval",
                 earliestExecutionTime: DataStart.AddMinutes(5),
-                latestExecutionTime: DataStart.AddMinutes(25),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(25),
                 estimatedJobDuration: TimeSpan.FromMinutes(10),
                 expectedBestExecutionTime: DataStart.AddMinutes(5),
                 expectedCarbonIntensity: 25
@@ -178,7 +178,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRow(
                 "Execution range greater than data interval",
                 earliestExecutionTime: DataStart.AddMinutes(-40),
-                latestExecutionTime: DataStart.AddMinutes(120),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
                 estimatedJobDuration: TimeSpan.FromMinutes(10),
                 expectedBestExecutionTime: DataStart.AddMinutes(20),
                 expectedCarbonIntensity: 10
@@ -186,7 +186,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRow(
                 "Execution starts within, end after data interval",
                 earliestExecutionTime: DataStart.AddMinutes(25),
-                latestExecutionTime: DataStart.AddMinutes(120),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
                 estimatedJobDuration: TimeSpan.FromMinutes(10),
                 expectedBestExecutionTime: DataStart.AddMinutes(30),
                 expectedCarbonIntensity: 55
@@ -194,7 +194,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRow(
                 "Execution starts within, end after data interval, start between data points",
                 earliestExecutionTime: DataStart.AddMinutes(21),
-                latestExecutionTime: DataStart.AddMinutes(120),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
                 estimatedJobDuration: TimeSpan.FromMinutes(10),
                 expectedBestExecutionTime: DataStart.AddMinutes(21),
                 expectedCarbonIntensity: 19.5
@@ -202,13 +202,13 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRowNoForecast(
                 "Execution starts after data interval",
                 earliestExecutionTime: DataStart.AddMinutes(33),
-                latestExecutionTime: DataStart.AddMinutes(120),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
                 estimatedJobDuration: TimeSpan.FromMinutes(10)
             ),
             TestRow(
                 "Job shorter than data resolution",
                 earliestExecutionTime: DataStart,
-                latestExecutionTime: DataStart.AddMinutes(120),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
                 estimatedJobDuration: TimeSpan.FromSeconds(5),
                 expectedBestExecutionTime: DataStart.AddMinutes(20),
                 expectedCarbonIntensity: 5
@@ -216,7 +216,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRow(
                 "Job shorter than data resolution with start not matching data interval",
                 earliestExecutionTime: DataStart.AddMinutes(21),
-                latestExecutionTime: DataStart.AddMinutes(120),
+                jobShouldBeFinishedAt: DataStart.AddMinutes(120),
                 estimatedJobDuration: TimeSpan.FromSeconds(5),
                 expectedBestExecutionTime: DataStart.AddMinutes(21),
                 expectedCarbonIntensity: 5
@@ -224,13 +224,13 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             TestRowNoForecast(
                 "Job longer than data interval",
                 earliestExecutionTime: DataStart,
-                latestExecutionTime: DataStart.AddHours(5),
+                jobShouldBeFinishedAt: DataStart.AddHours(5),
                 estimatedJobDuration: TimeSpan.FromHours(1)
             ),
             TestRow(
                 "18 minute job",
                 earliestExecutionTime: DataStart,
-                latestExecutionTime: DataStart.AddHours(2),
+                jobShouldBeFinishedAt: DataStart.AddHours(2),
                 estimatedJobDuration: TimeSpan.FromMinutes(18), 
                 expectedBestExecutionTime: DataStart.AddMinutes(0), 
                 expectedCarbonIntensity: 25
@@ -240,14 +240,14 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         static object[] TestRow(
             string testCase,
             DateTimeOffset earliestExecutionTime, 
-            DateTimeOffset latestExecutionTime, 
+            DateTimeOffset jobShouldBeFinishedAt, 
             TimeSpan estimatedJobDuration,
             DateTimeOffset expectedBestExecutionTime,
             double expectedCarbonIntensity) =>
         [
             testCase,
             earliestExecutionTime,
-            latestExecutionTime,
+            jobShouldBeFinishedAt,
             estimatedJobDuration,
             ExecutionTime.BestExecutionTime(
                 expectedBestExecutionTime,
@@ -260,12 +260,12 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         static object[] TestRowNoForecast(
             string testCase,
             DateTimeOffset earliestExecutionTime, 
-            DateTimeOffset latestExecutionTime, 
+            DateTimeOffset jobShouldBeFinishedAt, 
             TimeSpan estimatedJobDuration) =>
         [
             testCase,
             earliestExecutionTime,
-            latestExecutionTime,
+            jobShouldBeFinishedAt,
             estimatedJobDuration,
             ExecutionTime.NoForecast
         ];
