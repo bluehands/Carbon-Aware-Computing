@@ -213,6 +213,14 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
                 expectedBestExecutionTime: DataStart.AddMinutes(20),
                 expectedCarbonIntensity: 5
             ),
+            TestRow(
+                "Job shorter than data resolution with start not matching data interval",
+                earliestExecutionTime: DataStart.AddMinutes(21),
+                latestExecutionTime: DataStart.AddMinutes(120),
+                estimatedJobDuration: TimeSpan.FromSeconds(5),
+                expectedBestExecutionTime: DataStart.AddMinutes(21),
+                expectedCarbonIntensity: 5
+            ),
             TestRowNoForecast(
                 "Job longer than data interval",
                 earliestExecutionTime: DataStart,
