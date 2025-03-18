@@ -121,26 +121,15 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         [DynamicData(nameof(FiveMinuteEmissionDataCases))]
         public async Task FiveMinuteEmissionData(
             string testCase,
-            DateTimeOffset earliestExecutionTime, 
-            DateTimeOffset jobShouldBeFinishedAt, 
+            DateTimeOffset earliestExecutionTime,
+            DateTimeOffset jobShouldBeFinishedAt,
             TimeSpan estimatedJobDuration,
             ExecutionTime expectedBestExecutionTime)
         {
             var provider = CreateProvider(FiveMinuteTestData, FiveMinutes);
 
             var bestExecution = await provider.CalculateBestExecutionTime(Location, earliestExecutionTime, jobShouldBeFinishedAt, estimatedJobDuration);
-            expectedBestExecutionTime
-                .Switch(
-                    noForecast: n => Assert.AreEqual(n, bestExecution),
-                    bestExecutionTime: expected =>
-                    {
-                        var actual = bestExecution as ExecutionTime.BestExecutionTime_;
-                        Assert.IsNotNull(actual);
-                        Assert.AreEqual(expected.ExecutionTime, actual.ExecutionTime);
-                        Assert.AreEqual(expected.CarbonIntensity, actual.CarbonIntensity);
-                        Assert.AreEqual(expected.Duration, actual.Duration);
-                    });
-
+            AssertExecutionTimeEqual(expectedBestExecutionTime, bestExecution);
         }
 
         static IEnumerable<object[]> FiveMinuteEmissionDataCases =>
@@ -231,16 +220,42 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
                 "18 minute job",
                 earliestExecutionTime: DataStart,
                 jobShouldBeFinishedAt: DataStart.AddHours(2),
-                estimatedJobDuration: TimeSpan.FromMinutes(18), 
-                expectedBestExecutionTime: DataStart.AddMinutes(0), 
+                estimatedJobDuration: TimeSpan.FromMinutes(18),
+                expectedBestExecutionTime: DataStart.AddMinutes(0),
                 expectedCarbonIntensity: 25
             )
         ];
 
+        [TestMethod]
+        public async Task EmissionDataWithDataBeforeStart()
+        {
+            var provider = CreateProvider([5, 5, 10, 20, 30, 20, 10, 5, 5, 10], FiveMinutes);
+
+            var bestExecution = await provider.CalculateBestExecutionTime(Location, DataStart.AddMinutes(15), 
+                DataStart.AddHours(4), TimeSpan.FromSeconds(3));
+
+            AssertExecutionTimeEqual(ExecutionTime.BestExecutionTime(DataStart.AddMinutes(35), FiveMinutes, 5, 10), bestExecution);
+        }
+
+        static void AssertExecutionTimeEqual(ExecutionTime expectedBestExecutionTime, ExecutionTime bestExecution)
+        {
+            expectedBestExecutionTime
+                .Switch(
+                    noForecast: n => Assert.AreEqual(n, bestExecution),
+                    bestExecutionTime: expected =>
+                    {
+                        var actual = bestExecution as ExecutionTime.BestExecutionTime_;
+                        Assert.IsNotNull(actual);
+                        Assert.AreEqual(expected.ExecutionTime, actual.ExecutionTime);
+                        Assert.AreEqual(expected.CarbonIntensity, actual.CarbonIntensity);
+                        Assert.AreEqual(expected.Duration, actual.Duration);
+                    });
+        }
+
         static object[] TestRow(
             string testCase,
-            DateTimeOffset earliestExecutionTime, 
-            DateTimeOffset jobShouldBeFinishedAt, 
+            DateTimeOffset earliestExecutionTime,
+            DateTimeOffset jobShouldBeFinishedAt,
             TimeSpan estimatedJobDuration,
             DateTimeOffset expectedBestExecutionTime,
             double expectedCarbonIntensity) =>
@@ -259,8 +274,8 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
 
         static object[] TestRowNoForecast(
             string testCase,
-            DateTimeOffset earliestExecutionTime, 
-            DateTimeOffset jobShouldBeFinishedAt, 
+            DateTimeOffset earliestExecutionTime,
+            DateTimeOffset jobShouldBeFinishedAt,
             TimeSpan estimatedJobDuration) =>
         [
             testCase,
@@ -277,7 +292,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
             return provider;
         }
 
-        
+
 
         static List<EmissionsData> EmissionData(double[] intensities, TimeSpan interval)
         {

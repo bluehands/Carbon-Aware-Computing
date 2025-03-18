@@ -10,7 +10,7 @@
 
   <!--#region adapt versions here-->
   <MajorVersion>3</MajorVersion>
-  <MinorAndPatchVersion>0.0</MinorAndPatchVersion>
+  <MinorAndPatchVersion>0.1</MinorAndPatchVersion>
   <!--#endregion-->
 
   <AssemblyVersion>$(MajorVersion).0.0</AssemblyVersion>

@@ -83,6 +83,13 @@ internal sealed class ForecastHandler : IForecastHandler
                 .Where(e => e.Time + e.Duration <= endAt);
         }
 
+        if (startAt != null)
+        {
+            //remove data at start data interval is prior to startAt
+            emissionsData = emissionsData
+                .Where(e => e.Time + e.Duration > startAt);
+        }
+
         forecast.ForecastData = emissionsData.ToArray();
         forecast.OptimalDataPoints = forecast.ForecastData.GetOptimalEmissions();
 
