@@ -1,4 +1,5 @@
 ﻿using FunicularSwitch.Generators;
+using GSF.CarbonAware.Models;
 
 // ReSharper disable InconsistentNaming
 namespace CarbonAwareComputing;
@@ -6,6 +7,12 @@ public abstract class CarbonAwareDataProvider
 {
     public abstract Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset jobShouldBeFinishedAt, TimeSpan estimatedJobDuration);
     public abstract Task<GridCarbonIntensity> GetCarbonIntensity(ComputingLocation location, DateTimeOffset now);
+
+    public abstract Task<EmissionsForecast?> GetEmissionForecast(
+        ComputingLocation location, 
+        DateTimeOffset earliestExecutionTime, 
+        DateTimeOffset jobShouldBeFinishedAt, 
+        TimeSpan estimatedJobDuration);
 }
 
 [UnionType(CaseOrder = CaseOrder.Explicit)]

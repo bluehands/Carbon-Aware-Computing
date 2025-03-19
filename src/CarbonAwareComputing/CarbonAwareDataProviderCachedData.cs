@@ -3,6 +3,7 @@ using CarbonAware.DataSources.Memory;
 using CarbonAware.Model;
 using GSF.CarbonAware.Handlers;
 using Microsoft.Extensions.Logging.Abstractions;
+using EmissionsForecast = GSF.CarbonAware.Models.EmissionsForecast;
 
 namespace CarbonAwareComputing;
 
@@ -27,20 +28,13 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
 
     public override async Task<ExecutionTime> CalculateBestExecutionTime(ComputingLocation location, DateTimeOffset earliestExecutionTime, DateTimeOffset jobShouldBeFinishedAt, TimeSpan estimatedJobDuration)
     {
-        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, earliestExecutionTime, jobShouldBeFinishedAt).ConfigureAwait(false);
-        if (!adjustedForecastBoundary.ForecastIsAvailable || jobShouldBeFinishedAt - adjustedForecastBoundary.EarliestStartTime < estimatedJobDuration)
-        {
+        var forecastForLocation = await GetEmissionForecast(location, earliestExecutionTime, jobShouldBeFinishedAt, estimatedJobDuration);
+        if (forecastForLocation == null)
             return ExecutionTime.NoForecast;
-        }
 
-        var earliestStartTime = adjustedForecastBoundary.EarliestStartTime;
-        var forecast = await ForecastHandler.GetCurrentForecastAsync([location.Name], earliestStartTime, adjustedForecastBoundary.DataEndTime, Convert.ToInt32(estimatedJobDuration.TotalMinutes)).ConfigureAwait(false);
-        var forecastForLocation = forecast[0];
         var best = forecastForLocation.OptimalDataPoints.FirstOrDefault();
         if (best == null)
-        {
             return ExecutionTime.NoForecast;
-        }
 
         var bestExecutionTime = best.Time;
         if (best.Time < earliestExecutionTime)
@@ -50,6 +44,22 @@ public abstract class CarbonAwareDataProviderCachedData : CarbonAwareDataProvide
 
         return ExecutionTime.BestExecutionTime(bestExecutionTime, best.Duration, best.Rating, forecastForLocation.EmissionsDataPoints.First().Rating);
     }
+
+    public override async Task<EmissionsForecast?> GetEmissionForecast(
+        ComputingLocation location, 
+        DateTimeOffset earliestExecutionTime, 
+        DateTimeOffset jobShouldBeFinishedAt, 
+        TimeSpan estimatedJobDuration)
+    {
+        var adjustedForecastBoundary = await TryAdjustForecastBoundary(location, earliestExecutionTime, jobShouldBeFinishedAt).ConfigureAwait(false);
+        if (!adjustedForecastBoundary.ForecastIsAvailable || jobShouldBeFinishedAt - adjustedForecastBoundary.EarliestStartTime < estimatedJobDuration)
+            return null;
+
+        var earliestStartTime = adjustedForecastBoundary.EarliestStartTime;
+        var forecast = await ForecastHandler.GetCurrentForecastAsync([location.Name], earliestStartTime, adjustedForecastBoundary.DataEndTime, Convert.ToInt32(estimatedJobDuration.TotalMinutes)).ConfigureAwait(false);
+        return forecast[0];
+    }
+
 
     public override async Task<GridCarbonIntensity> GetCarbonIntensity(ComputingLocation location, DateTimeOffset now)
     {

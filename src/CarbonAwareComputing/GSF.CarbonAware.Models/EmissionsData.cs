@@ -6,7 +6,7 @@ public record EmissionsData
     public string? Location { get; init; }
     public DateTimeOffset Time { get => _time; init => _time = value.ToUniversalTime(); }
     public double Rating { get; init; }
-    public TimeSpan Duration { get; set; }
+    public TimeSpan Duration { get; init; }
 
     public static implicit operator EmissionsData(global::CarbonAware.Model.EmissionsData emissionsData) {
         return new EmissionsData

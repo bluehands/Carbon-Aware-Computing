@@ -231,7 +231,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
         {
             var provider = CreateProvider([5, 5, 10, 20, 30, 20, 10, 5, 5, 10], FiveMinutes);
 
-            var bestExecution = await provider.CalculateBestExecutionTime(Location, DataStart.AddMinutes(15), 
+            var bestExecution = await provider.CalculateBestExecutionTime(Location, DataStart.AddMinutes(15),
                 DataStart.AddHours(4), TimeSpan.FromSeconds(3));
 
             AssertExecutionTimeEqual(ExecutionTime.BestExecutionTime(DataStart.AddMinutes(35), FiveMinutes, 5, 10), bestExecution);
@@ -303,6 +303,19 @@ namespace CarbonAwareComputing.ExecutionForecast.Test
                 Rating = d,
                 Time = DataStart.Add(i * interval)
             }).ToList();
+        }
+    }
+
+    [TestClass]
+    public class When_testdesciption
+    {
+        [TestMethod]
+        public async Task Then_assertion()
+        {
+            var now = new DateTimeOffset(2025, 03, 18, 9, 39, 0, TimeSpan.FromHours(1));
+            var provider = new CarbonAwareDataProviderOpenData();
+            var best = await provider.CalculateBestExecutionTime(ComputingLocations.Germany, now,
+                now.AddMinutes(40), TimeSpan.FromSeconds(3));
         }
     }
 }
