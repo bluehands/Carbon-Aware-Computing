@@ -54,7 +54,7 @@ public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
         }
 
         var eTagHeader = response.Headers.FirstOrDefault(h => h.Key.Equals("ETag", StringComparison.InvariantCultureIgnoreCase));
-        eTag = eTagHeader.Value.FirstOrDefault();
+        eTag = eTagHeader.Value?.FirstOrDefault();
 
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var jsonFile = System.Text.Json.JsonSerializer.Deserialize<EmissionsForecastJsonFile>(json)!;
