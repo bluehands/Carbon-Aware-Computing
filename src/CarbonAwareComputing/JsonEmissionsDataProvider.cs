@@ -46,7 +46,10 @@ public class JsonEmissionsDataProvider : JsonEmissionsDataProviderBase, IDisposa
 
     public JsonEmissionsDataProvider()
     {
-        m_HttpClient = new HttpClient();
+        m_HttpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(5)
+        };
         m_ShouldDisposeHtmlClient = true;
     }
     public JsonEmissionsDataProvider(HttpClient httpClient)

@@ -15,7 +15,10 @@ namespace CarbonAwareComputing;
 
 public class CarbonAwareDataProviderOpenData : CarbonAwareDataProviderCachedData
 {
-    private static readonly HttpClient httpClient = new HttpClient();
+    static readonly HttpClient httpClient = new HttpClient()
+    {
+        Timeout = TimeSpan.FromSeconds(5)
+    };
     private readonly string m_ForecastDataEndpointTemplate;
 
     public CarbonAwareDataProviderOpenData()
