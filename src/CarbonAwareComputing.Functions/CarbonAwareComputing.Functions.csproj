@@ -1,25 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.11.4" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi.Core" Version="1.5.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Primitives" Version="6.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Microsoft.Graph" Version="4.50.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Azure.Identity" Version="1.11.4" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.2.0" />
+		<PackageReference Include="Microsoft.Azure.WebJobs.Extensions.OpenApi.Core" Version="1.5.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.4" />
+		<PackageReference Include="Microsoft.Extensions.Primitives" Version="6.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="Microsoft.Graph" Version="4.50.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\CarbonAwareComputing\CarbonAwareComputing.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\CarbonAwareComputing\CarbonAwareComputing.csproj" />
+	</ItemGroup>
 
 </Project>

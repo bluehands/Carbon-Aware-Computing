@@ -15,7 +15,7 @@ internal static class IntervalHelper
     /// <param name="startTime">Original start time provided by user</param>
     /// <param name="endTime">Original end time provided by user</param>
     /// <returns>Filtered emissions data.</returns>
-    public static IEnumerable<EmissionsData> FilterByDuration(IEnumerable<EmissionsData> expandedData, DateTimeOffset startTime, DateTimeOffset endTime)
+    public static IEnumerable<EmissionsData> FilterByDuration(this IEnumerable<EmissionsData> expandedData, DateTimeOffset startTime, DateTimeOffset endTime)
     {
         return expandedData.Where(d => (d.Time + d.Duration) > startTime && d.Time <= endTime);
     }

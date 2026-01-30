@@ -36,18 +36,18 @@ internal class MemoryDataSource : IForecastDataSource
 
     public async Task<EmissionsForecast> GetCurrentCarbonIntensityForecastAsync(Location location)
     {
-        return await GetCarbonIntensityForecastAsync(location, DateTimeOffset.Now);
+        return await GetCarbonIntensityForecastAsync(location, DateTimeOffset.Now).ConfigureAwait(false);
     }
 
     public async Task<EmissionsForecast> GetCarbonIntensityForecastAsync(Location location, DateTimeOffset requestedAt)
     {
-        var emissionsData = await _emissionsDataProvider.GetForecastData(location);
+        var emissionsData = await _emissionsDataProvider.GetForecastData(location).ConfigureAwait(false);
         if (!emissionsData.Any())
         {
             _logger.LogDebug("Emission data list is empty");
             return new EmissionsForecast();
         }
-        _logger.LogDebug($"Total emission records retrieved {emissionsData.Count()}");
+        _logger.LogDebug($"Total emission records retrieved {emissionsData.Count}");
 
 
         return new EmissionsForecast()
@@ -55,7 +55,7 @@ internal class MemoryDataSource : IForecastDataSource
             Location = location,
             GeneratedAt = DateTimeOffset.Now,
             ForecastData = emissionsData,
-            OptimalDataPoints = CarbonAwareOptimalEmission.GetOptimalEmissions(emissionsData)
+            OptimalDataPoints = emissionsData.GetOptimalEmissions()
         };
     }
 

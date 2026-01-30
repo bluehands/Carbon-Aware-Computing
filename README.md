@@ -77,7 +77,7 @@ The *CarbonAwareDataProviderOpenData* has a cache of all forecasts. To improve p
 
 ## Hangfire Extension
 
-Hangfire is one of the most used tools for background processing in .NET. Use the *[Hangfire.CarbonAwareExecution](https://github.com/bluehands/Hangfire.CarbonAwareExecution)* Extension to enqueue and schedule your jobs.
+Hangfire is one of the most used tools for background processing in .NET. Use the *[Hangfire.Community.CarbonAwareExecution](https://github.com/bluehands/Hangfire.Community.CarbonAwareExecution)* extension to enqueue and schedule your jobs.
 
 ### Installation
 
@@ -90,13 +90,14 @@ Install-Package Hangfire.Community.CarbonAwareExecution
 After installation add the extension to the Hangfire configuration.
 
 ``` csharp
-builder.Services.AddHangfireCarbonAwareExecution(configuration => configuration.
-    UseCarbonAwareDataProvider(new CarbonAwareDataProviderOpenData(), ComputingLocations.Germany));
+builder.Services.AddHangfire(configuration => configuration
+    .UseCarbonAwareExecution(new CarbonAwareDataProviderOpenData(), ComputingLocations.Germany)
+);
 ```
 
 ### Usage
 
-There are extension to **Enqueue** and **Schedule** with *WithCarbonAwarenessAsync*. For more details check the [GitHub Repository](https://github.com/bluehands/Hangfire.CarbonAwareExecution).
+Every backgroud job with a `CarbonAwareExectution` parameter will now be scheduled with optimized carbon footprint within the interval you specified. For more details check the [GitHub Repository](https://github.com/bluehands/Hangfire.Community.CarbonAwareExecution).
 
 ## Web API
 

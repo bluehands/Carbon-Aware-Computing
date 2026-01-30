@@ -19,38 +19,44 @@ public record EmissionsForecast
     /// <summary>
     /// Gets or sets the forecast data points.
     /// </summary>
-    public IEnumerable<EmissionsData> ForecastData { get; set; } = new List<EmissionsData>();
+    public IReadOnlyList<EmissionsData> ForecastData { get; set; } = Array.Empty<EmissionsData>();
 
     /// <summary>
     /// Gets or sets the optimal data points within the ForecastData set.
     /// </summary>
-    public IEnumerable<EmissionsData> OptimalDataPoints { get; set; } = new List<EmissionsData>();
-
+    public IReadOnlyCollection<EmissionsData> OptimalDataPoints { get; set; } = Array.Empty<EmissionsData>();
 
     public void Validate(DateTimeOffset dataStartAt, DateTimeOffset dataEndAt)
     {
         var errors = new Dictionary<string, List<string>>();
-        var firstDataPoint = ForecastData.First();
-        var lastDataPoint = ForecastData.Last();
-        var minTime = firstDataPoint.Time;
-        var maxTime = lastDataPoint.Time + lastDataPoint.Duration;
-
-        if (dataStartAt >= dataEndAt)
+        if (ForecastData.Count == 0)
         {
-            AddErrorMessage(errors, "dataStartAt", "dataStartAt must be earlier than dataEndAt");
+            AddErrorMessage(errors, "data", "No forecast data points available");
+        }
+        else
+        {
+            var firstDataPoint = ForecastData.First();
+            var lastDataPoint = ForecastData[^1];
+            var minTime = firstDataPoint.Time;
+            var maxTime = lastDataPoint.Time + lastDataPoint.Duration;
+
+            if (dataStartAt >= dataEndAt)
+            {
+                AddErrorMessage(errors, "dataStartAt", "dataStartAt must be earlier than dataEndAt");
+            }
+
+            if (dataStartAt < minTime || dataStartAt > maxTime)
+            {
+                AddErrorMessage(errors, "dataStartAt", $"dataStartAt must be within time range of the forecasted data, '{minTime}' through '{maxTime}'");
+            }
+
+            if (dataEndAt < minTime || dataEndAt > maxTime)
+            {
+                AddErrorMessage(errors, "dataEndAt", $"dataEndAt must be within time range of the forecasted data, '{minTime}' through '{maxTime}'");
+            }
         }
 
-        if (dataStartAt < minTime || dataStartAt > maxTime)
-        {
-            AddErrorMessage(errors, "dataStartAt", $"dataStartAt must be within time range of the forecasted data, '{minTime}' through '{maxTime}'");
-        }
-
-        if (dataEndAt < minTime || dataEndAt > maxTime)
-        {
-            AddErrorMessage(errors, "dataEndAt", $"dataEndAt must be within time range of the forecasted data, '{minTime}' through '{maxTime}'");
-        }
-
-        if (errors.Keys.Count > 0)
+        if (errors.Count > 0)
         {
             ArgumentException error = new ArgumentException("Invalid EmissionsForecast");
             foreach (KeyValuePair<string, List<string>> message in errors)
@@ -73,7 +79,7 @@ public record EmissionsForecast
     public TimeSpan GetDurationBetweenForecastDataPoints()
     {
         var firstPoint = ForecastData.FirstOrDefault();
-        var secondPoint = ForecastData.Skip(1)?.FirstOrDefault();
+        var secondPoint = ForecastData.Skip(1).FirstOrDefault();
 
         var first = firstPoint ?? throw new CarbonAwareException("First. Too few data points returned");
         var second = secondPoint ?? throw new CarbonAwareException("Second. Too few data points returned");

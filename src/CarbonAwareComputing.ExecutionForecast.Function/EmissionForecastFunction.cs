@@ -53,13 +53,13 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         {
             try
             {
-                var template = await System.IO.File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
-                var apiKeyPassword = m_ApplicationSettings.Value.ApiKeyPassword!;
+                var template = await File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
+                var apiKeyPassword = m_ApplicationSettings.Value.ApiKeyPassword;
                 var mailFrom = m_ApplicationSettings.Value.MailFrom;
                 var tenantId = m_ApplicationSettings.Value.TenantId;
                 var clientId = m_ApplicationSettings.Value.ClientId;
                 var clientSecret = m_ApplicationSettings.Value.ClientSecret;
-                return await ApiRegistration.Register(req.Body, apiKeyPassword!, template, mailFrom, tenantId, clientId, clientSecret, log);
+                return await ApiRegistration.Register(req.Body, apiKeyPassword, template, mailFrom, tenantId, clientId, clientSecret, log);
             }
             catch (Exception ex)
             {
@@ -68,10 +68,10 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
             }
         }
 
-        [OpenApiOperation(operationId: "GetBestExecutionTime", tags: new[] { "forecast" }, Summary = "Get the best execution time with minimal grid carbon intensity", Description = "Get the best execution time with minimal grid carbon intensity. A time intervall of the given duration within the earliest and latest execution time with the most renewable energy in the power grid of the location", Visibility = OpenApiVisibilityType.Important)]
+        [OpenApiOperation(operationId: "GetBestExecutionTime", tags: new[] { "forecast" }, Summary = "Get the best execution time with minimal grid carbon intensity", Description = "Get the best execution time with minimal grid carbon intensity. A time intervall of the given duration within the earliest execution time and the time when the workload should be finished with the most renewable energy in the power grid of the location", Visibility = OpenApiVisibilityType.Important)]
         [OpenApiParameter(name: "location", In = ParameterLocation.Query, Required = true, Type = typeof(IEnumerable<string>), Example = typeof(LocationsExample), Description = "Comma seperated list of named locations (de,fr) or multiple location (location=fr & location=de) ")]
         [OpenApiParameter(name: "dataStartAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataStartAtExample), Description = "Start time boundary of forecasted data points. Ignores current forecast data points before this time. Defaults to the earliest time in the forecast data.")]
-        [OpenApiParameter(name: "dataEndAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataEndAtExample), Description = "End time boundary of forecasted data points. Ignores current forecast data points after this time. Defaults to the latest time in the forecast data.")]
+        [OpenApiParameter(name: "dataEndAt", In = ParameterLocation.Query, Required = false, Type = typeof(DateTimeOffset), Example = typeof(DataEndAtExample), Description = "Time when workload should be finished regarding windowSize. Ignores current forecast data points after this time. Entire forecast is used, if unspecified.")]
         [OpenApiParameter(name: "windowSize", In = ParameterLocation.Query, Required = false, Type = typeof(int), Example = typeof(WindowSizeExample), Description = "The estimated duration (in minutes) of the workload. Defaults to 5 Minutes (This is different from GSF SDK which default to the duration of a single forecast data point).")]
         [OpenApiSecurity("apikey", SecuritySchemeType.ApiKey, In = OpenApiSecurityLocationType.Header, Name = "x-api-key")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(IEnumerable<EmissionsForecast>), Summary = "Forecast available. Operation succeeded", Description = "Forecast data is available and the best execution time is provided. This is a subset of the GSF SDK data. No information on the underlying forecast data ist provided. E.g. no forecast boundaries, no forcast data, no forecast generation date")]
@@ -92,8 +92,8 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     return new StatusCodeResult(403);
                 }
 
-                var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword!);
-                if (string.IsNullOrEmpty(apiKey))
+                var mailAddress = await StringCipher.DecryptAsync(apiKey, m_ApplicationSettings.Value.ApiKeyPassword).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(mailAddress))
                 {
                     return new StatusCodeResult(403);
                 }
@@ -141,7 +141,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     {
                         continue;
                     }
-                    var best = await m_Provider.CalculateBestExecutionTime(computingLocation!, dataStartAt, dataEndAt, TimeSpan.FromMinutes(windowSize));
+                    var best = await m_Provider.CalculateBestExecutionTime(computingLocation, dataStartAt, dataEndAt, TimeSpan.FromMinutes(windowSize));
                     if (best is ExecutionTime.BestExecutionTime_ bestExecutionTime)
                     {
                         forecasts.Add(new EmissionsForecast
@@ -153,7 +153,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                             new()
                             {
                                 Timestamp = bestExecutionTime.ExecutionTime,
-                                Value = bestExecutionTime.Rating
+                                Value = bestExecutionTime.CarbonIntensity
                             }
                         }
                         });
@@ -189,7 +189,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
 
     public class DataStartAtExample : OpenApiExample<DateTimeOffset?>
     {
-        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
+        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy? namingStrategy = null)
         {
             Examples.Add(OpenApiExampleResolver.Resolve("Now", DateTimeOffset.Now.PadSeconds(), namingStrategy));
             Examples.Add(OpenApiExampleResolver.Resolve("In one hour", DateTimeOffset.Now.AddHours(1).PadSeconds(), namingStrategy));
@@ -198,7 +198,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     }
     public class DataEndAtExample : OpenApiExample<DateTimeOffset?>
     {
-        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy namingStrategy = null)
+        public override IOpenApiExample<DateTimeOffset?> Build(NamingStrategy? namingStrategy = null)
         {
             Examples.Add(OpenApiExampleResolver.Resolve("In five hours", DateTimeOffset.Now.AddHours(5).PadSeconds(), namingStrategy));
             Examples.Add(OpenApiExampleResolver.Resolve("In ten hours", DateTimeOffset.Now.AddHours(10).PadSeconds(), namingStrategy));
@@ -207,7 +207,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
     }
     public class WindowSizeExample : OpenApiExample<int?>
     {
-        public override IOpenApiExample<int?> Build(NamingStrategy namingStrategy = null)
+        public override IOpenApiExample<int?> Build(NamingStrategy? namingStrategy = null)
         {
             Examples.Add(OpenApiExampleResolver.Resolve("10 Minutes", 10, namingStrategy));
             Examples.Add(OpenApiExampleResolver.Resolve("One hour", 60, namingStrategy));
@@ -268,7 +268,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         [JsonPropertyName("value")]
         public double Value { get; set; }
 
-        public static EmissionsData FromEmissionsData(GSF.CarbonAware.Models.EmissionsData emissionsData)
+        public static EmissionsData? FromEmissionsData(GSF.CarbonAware.Models.EmissionsData? emissionsData)
         {
             if (emissionsData == null)
             {

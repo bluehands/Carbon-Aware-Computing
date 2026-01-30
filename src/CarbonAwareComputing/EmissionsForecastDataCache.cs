@@ -12,12 +12,12 @@ internal abstract class EmissionsForecastDataCacheBase
     }
     public async Task<List<EmissionsData>> GetForecastData()
     {
-        m_CachedData = await FillEmissionsDataCache(m_Location, m_CachedData);
+        m_CachedData = await FillEmissionsDataCache(m_Location, m_CachedData).ConfigureAwait(false);
         return m_CachedData.EmissionsData;
     }
     public async Task<DataBoundary> GetDataBoundary()
     {
-        m_CachedData = await FillEmissionsDataCache(m_Location, m_CachedData);
+        m_CachedData = await FillEmissionsDataCache(m_Location, m_CachedData).ConfigureAwait(false);
         if (m_CachedData.EmissionsData.Count == 0)
         {
             return new DataBoundary(DateTimeOffset.MaxValue, DateTimeOffset.MinValue);
@@ -37,7 +37,7 @@ internal class EmissionsForecastDataCache : EmissionsForecastDataCacheBase
 
     protected override async Task<CachedData> FillEmissionsDataCache(ComputingLocation location, CachedData currentCachedData)
     {
-        return await m_FillEmissionDataCache.Invoke(currentCachedData, location);
+        return await m_FillEmissionDataCache.Invoke(currentCachedData, location).ConfigureAwait(false);
     }
 }
 
