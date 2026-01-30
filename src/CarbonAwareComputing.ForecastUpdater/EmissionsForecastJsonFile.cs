@@ -11,6 +11,7 @@ namespace CarbonAwareComputing.ForecastUpdater
     public class EmissionsForecastJsonFile
     {
         public DateTimeOffset GeneratedAt { get; set; } = DateTimeOffset.Now;
+        public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.Now;
         public List<EmissionsDataRaw> Emissions { get; set; } = new List<EmissionsDataRaw>();
     }
     public record EmissionsDataRaw

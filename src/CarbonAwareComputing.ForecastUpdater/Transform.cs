@@ -45,6 +45,7 @@ public static class Transform
         var jsonFile = new EmissionsForecastJsonFile()
         {
             GeneratedAt = forecast.GeneratedAt,
+            UpdatedAt = forecast.UpdatedAt,
             Emissions = forecast.ForecastData.Select(d => new EmissionsDataRaw { Time = d.Time, Rating = d.Rating, Duration = d.Duration }).ToList()
         };
         var json = System.Text.Json.JsonSerializer.Serialize(jsonFile);

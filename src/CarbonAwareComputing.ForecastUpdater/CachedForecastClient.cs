@@ -14,7 +14,7 @@ public class CachedForecastClient
         m_ContainerName = containerName;
         m_BaseUri = new Uri($"https://{storageAccountName}.blob.core.windows.net");
     }
-    public async Task<Result<Unit>> UpdateForecastData(ComputingLocation location, (string sdk, string minimized) content)
+    public async Task<Result<Unit>> UpdateForecastData(ComputingLocation location, (string sdk, string minimized) content, bool writeHistory)
     {
         try
         {
@@ -23,6 +23,12 @@ public class CachedForecastClient
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(m_ContainerName);
             var blobClient = containerClient.GetBlobClient($"{location.Name}.json");
             await blobClient.UploadAsync(new BinaryData(content.sdk), true);
+            if (writeHistory)
+            {
+                blobClient = containerClient.GetBlobClient($"{location.Name}.{DateTimeOffset.Now:s}.json");
+                await blobClient.UploadAsync(new BinaryData(content.sdk), true);
+            }
+
             blobClient = containerClient.GetBlobClient($"{location.Name}.min.json");
             await blobClient.UploadAsync(new BinaryData(content.minimized), true);
             return No.Thing;

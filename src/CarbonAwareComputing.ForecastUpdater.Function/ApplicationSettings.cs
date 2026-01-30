@@ -7,5 +7,6 @@ public class ApplicationSettings
     public string? ClientId { get; init; }
     public string? TenantId { get; init; }
     public string? ClientSecret { get; init; }
+    public string? WriteHistoryFor { get; init; }
 
 }

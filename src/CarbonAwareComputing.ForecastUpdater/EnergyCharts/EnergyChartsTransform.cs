@@ -35,6 +35,7 @@ public static class EnergyChartsTransform
                 emissions => new EmissionsForecast
                 {
                     GeneratedAt = generatedAt,
+                    UpdatedAt = DateTimeOffset.Now,
                     Location = new Location { Name = location },
                     ForecastData = emissions
                 }

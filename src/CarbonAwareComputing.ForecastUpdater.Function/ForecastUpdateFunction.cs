@@ -25,14 +25,14 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
     public class ForecastUpdateFunction
     {
         private readonly IOptions<ApplicationSettings> m_ApplicationSettings;
+        private readonly List<string> m_WriteHistoryFor;
         private readonly HttpClient m_Http;
 
         public ForecastUpdateFunction(IHttpClientFactory httpClientFactory, IOptions<ApplicationSettings> applicationSettings)
         {
             m_ApplicationSettings = applicationSettings;
-
+            m_WriteHistoryFor = m_ApplicationSettings.Value is { WriteHistoryFor: not null } ? m_ApplicationSettings.Value.WriteHistoryFor.Split(",").ToList() : new List<string>();
             m_Http = httpClientFactory.CreateClient();
-
         }
 
 
@@ -83,7 +83,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
                     energyChartsRoot => EnergyChartsTransform.ImportForecast(energyChartsRoot, computingLocation.Name)).Bind(
                     emissionsForecast => forecastStatisticsClient.UpdateForecastData(computingLocation, emissionsForecast)).Bind(
                     emissionsForecast => Transform.Serialize(emissionsForecast)).Bind(
-                    jsonFiles => cachedForecastClient.UpdateForecastData(computingLocation, jsonFiles)
+                    jsonFiles => cachedForecastClient.UpdateForecastData(computingLocation, jsonFiles, m_WriteHistoryFor.Contains(computingLocation.Name))
                 ).Match(
                     o => No.Thing,
                     e =>
@@ -106,7 +106,7 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
                     ukNationalGridRoot => UKNationalGridTransform.ImportForecast(ukNationalGridRoot, ukNationalGridRegion)).Bind(
                     emissionsForecast => forecastStatisticsClient.UpdateForecastData(computingLocation, emissionsForecast)).Bind(
                     emissionsForecast => Transform.Serialize(emissionsForecast)).Bind(
-                    json => cachedForecastClient.UpdateForecastData(computingLocation, json)
+                    json => cachedForecastClient.UpdateForecastData(computingLocation, json, m_WriteHistoryFor.Contains(computingLocation.Name))
                 ).Match(
                     o => No.Thing,
                     e =>

@@ -9,6 +9,8 @@ public record EmissionsForecast
     /// </summary>
     public DateTimeOffset GeneratedAt { get; set; }
 
+    public DateTimeOffset UpdatedAt { get; set; }
+
     /// <summary>
     /// Gets or sets the location the forecast is for.
     /// </summary>
