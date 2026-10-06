@@ -8,7 +8,7 @@ on:
 permissions:
   contents: read
 
-# Keep the shared slots unchanged while a release awaits manual approval.
+# Serialize deployments to the shared Staging slots.
 concurrency:
   group: azure-functions-release
   cancel-in-progress: false
@@ -76,8 +76,6 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     environment: staging
-    outputs:
-      release_id: ${{ steps.deploy.outputs.release_id }}
     permissions:
       contents: read
       id-token: write
@@ -96,25 +94,16 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy packages to Staging slots
-        id: deploy
         shell: bash
         run: |
           set -euo pipefail
-          release_id="$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT:$GITHUB_SHA"
           while IFS='|' read -r app project; do
-            slot_id=$(az functionapp show --resource-group "$AZURE_RESOURCE_GROUP" \
-              --name "$app" --slot "$AZURE_SLOT" --query id --output tsv)
-            az tag update --resource-id "$slot_id" --operation Merge \
-              --tags "cac-release=deploying-$release_id" --output none
             az functionapp deployment source config-zip \
               --resource-group "$AZURE_RESOURCE_GROUP" \
               --name "$app" --slot "$AZURE_SLOT" \
               --src "$RUNNER_TEMP/packages/$app.zip" \
               --build-remote false --only-show-errors
-            az tag update --resource-id "$slot_id" --operation Merge \
-              --tags "cac-release=$release_id" --output none
           done <<< "$FUNCTION_APPS"
-          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
 
       - name: Summarize manual checks
         shell: bash
@@ -122,59 +111,10 @@ jobs:
           {
             echo "## Staging release"
             echo "Commit: $GITHUB_SHA"
-            echo "Check all three Staging slots before approving the production environment:"
+            echo "Check all three Staging slots:"
             while IFS='|' read -r app project; do
               host=$(az functionapp show --resource-group "$AZURE_RESOURCE_GROUP" \
                 --name "$app" --slot "$AZURE_SLOT" --query defaultHostName --output tsv)
               echo "- $app: https://$host"
             done <<< "$FUNCTION_APPS"
           } >> "$GITHUB_STEP_SUMMARY"
-
-  production:
-    name: Approve and swap Staging into production
-    needs: staging
-    runs-on: ubuntu-22.04
-    timeout-minutes: 30
-    environment: production
-    env:
-      RELEASE_ID: ${{ needs.staging.outputs.release_id }}
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Log in to Azure with OIDC
-        uses: Azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID || vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Swap tested Staging slots into production
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$RELEASE_ID"
-          slot_ids=()
-          while IFS='|' read -r app project; do
-            slot_id=$(az functionapp show --resource-group "$AZURE_RESOURCE_GROUP" \
-              --name "$app" --slot "$AZURE_SLOT" --query id --output tsv)
-            deployed_release=$(az tag list --resource-id "$slot_id" \
-              --query 'properties.tags."cac-release"' --output tsv)
-            if [[ "$deployed_release" != "$RELEASE_ID" ]]; then
-              echo "::error::$app no longer contains this approved release, or a swap was already attempted."
-              exit 1
-            fi
-            slot_ids+=("$slot_id")
-          done <<< "$FUNCTION_APPS"
-          # Consume every marker before swapping so retries cannot swap old code back.
-          for slot_id in "${slot_ids[@]}"; do
-            az tag update --resource-id "$slot_id" --operation Merge \
-              --tags "cac-release=swap-started-$RELEASE_ID" --output none
-          done
-          while IFS='|' read -r app project; do
-            az functionapp deployment slot swap \
-              --resource-group "$AZURE_RESOURCE_GROUP" \
-              --name "$app" --slot "$AZURE_SLOT" \
-              --target-slot production --only-show-errors
-            echo "- Swapped $app from $AZURE_SLOT into production." >> "$GITHUB_STEP_SUMMARY"
-          done <<< "$FUNCTION_APPS"
