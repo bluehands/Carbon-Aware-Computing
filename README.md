@@ -101,6 +101,31 @@ Every backgroud job with a `CarbonAwareExectution` parameter will now be schedul
 
 ## Web API
 
+### Azure Functions CI/CD
+
+The GitHub Actions workflow `.github/workflows/azure-functions.yml` runs on pushes to every branch except `main`. It restores, builds and tests the solution in Release mode, then publishes one ZIP artifact per Function App:
+
+| Project | Azure Function App |
+| --- | --- |
+| `CarbonAwareComputing.ExecutionForecast.Function` | `CarbonAwareComputingExecutionForecast` |
+| `CarbonAwareComputing.ForecastUpdater.Function` | `CarbonAwareComputingForecastUpdaterFunction` |
+| `CarbonAwareComputing.GridCarbonIntensity.Function` | `CarbonAwareComputingGridCarbonIntensity` |
+
+All apps use resource group `Carbon-Aware-Computing`, Linux plan `CarbonAwareComputingAppServicePlan` and an existing slot named `Staging`. The workflow deploys all three packages to those slots only. It does not deploy to production or swap slots.
+
+Before enabling deployments:
+
+- Create a GitHub environment named `staging`. Allow the intended non-`main` branches in its deployment rules.
+- Provide `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` as GitHub secrets or variables, either repository-wide or in the `staging` environment. Secrets take precedence over variables. Use the target subscription's UUID for `AZURE_SUBSCRIPTION_ID`.
+- Configure an Azure OIDC federated credential for the `staging` environment subject presented by GitHub. Existing branch-based OIDC credentials alone do not cover this job.
+- Grant the deployment identity permission to deploy ZIP packages and read slot details on the three apps. Ensure the slots, deployment endpoint access and matching runtime configuration exist. Disable remote build in the slots' deployment configuration; the workflow deploys already-published packages.
+- Separate Staging storage, queues and other data sources from production, and mark environment-specific settings as deployment-slot settings. Disable side-effecting background triggers in Staging where appropriate.
+- The projects currently target .NET 6 in-process / Azure Functions v4. The workflow installs .NET 8 for the C# 12 compiler features used by the shared library, and .NET 6 to run the existing tests; this does not change the deployment target. .NET 6 is out of support; confirm Azure runtime compatibility before deployment and plan a separate runtime migration.
+
+The Staging job summary contains the deployed commit and links for manual inspection. Review all three apps, including the ForecastUpdater's background processing.
+
+A workflow-wide concurrency group serializes deployments across branches to prevent simultaneous updates to the shared Staging slots. GitHub may replace an older pending run with a newer pending run; not every push is guaranteed to deploy. A subsequent deployment can replace the version under manual inspection.
+
 We provide a live and ready to use subset of the Carbon Aware SDK. The API is available from this location: [https://forecast.carbon-aware-computing.com/](https://forecast.carbon-aware-computing.com/). Use the Swagger UI [https://forecast.carbon-aware-computing.com/swagger/UI](https://forecast.carbon-aware-computing.com/swagger/UI) to play around with the API.
 
 We also provide an endpoint to get the actual grid carbon intensity. The API is available from this location: [https://intensity.carbon-aware-computing.com/](https://intensity.carbon-aware-computing.com/). Use the Swagger UI [https://intensity.carbon-aware-computing.com/swagger/UI](https://intensity.carbon-aware-computing.com/swagger/UI) to play around with the API.
