@@ -1,0 +1,176 @@
+name: Deploy Azure Functions
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: read
+
+# Keep the shared slots unchanged while a release awaits manual approval.
+concurrency:
+  group: azure-functions-release
+  cancel-in-progress: false
+
+env:
+  AZURE_RESOURCE_GROUP: Carbon-Aware-Computing
+  AZURE_SLOT: Staging
+  FUNCTION_APPS: |
+    CarbonAwareComputingExecutionForecast|CarbonAwareComputing.ExecutionForecast.Function
+    CarbonAwareComputingForecastUpdaterFunction|CarbonAwareComputing.ForecastUpdater.Function
+    CarbonAwareComputingGridCarbonIntensity|CarbonAwareComputing.GridCarbonIntensity.Function
+
+jobs:
+  build:
+    name: Build, test and package
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: |
+            6.0.x
+            8.0.x
+
+      - name: Restore
+        run: dotnet restore src/CarbonAwareComputing.sln
+
+      - name: Build
+        run: dotnet build src/CarbonAwareComputing.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test src/CarbonAwareComputing.sln --configuration Release --no-build --no-restore
+
+      - name: Publish deployment packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/packages"
+          while IFS='|' read -r app project; do
+            dotnet publish "src/$project/$project.csproj" \
+              --configuration Release --no-build --no-restore \
+              --output "$RUNNER_TEMP/publish/$app"
+            (cd "$RUNNER_TEMP/publish/$app" && zip -qr "$RUNNER_TEMP/packages/$app.zip" .)
+          done <<< "$FUNCTION_APPS"
+
+      - name: Upload deployment packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: azure-functions-${{ github.run_id }}
+          path: ${{ runner.temp }}/packages/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  staging:
+    name: Deploy all Functions to Staging
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    environment: staging
+    outputs:
+      release_id: ${{ steps.deploy.outputs.release_id }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download deployment packages
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: azure-functions-${{ github.run_id }}
+          path: ${{ runner.temp }}/packages
+
+      - name: Log in to Azure with OIDC
+        uses: Azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy packages to Staging slots
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_id="$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT:$GITHUB_SHA"
+          while IFS='|' read -r app project; do
+            slot_id=$(az functionapp show --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$app" --slot "$AZURE_SLOT" --query id --output tsv)
+            az tag update --resource-id "$slot_id" --operation Merge \
+              --tags "cac-release=deploying-$release_id" --output none
+            az functionapp deployment source config-zip \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$app" --slot "$AZURE_SLOT" \
+              --src "$RUNNER_TEMP/packages/$app.zip" \
+              --build-remote false --only-show-errors
+            az tag update --resource-id "$slot_id" --operation Merge \
+              --tags "cac-release=$release_id" --output none
+          done <<< "$FUNCTION_APPS"
+          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize manual checks
+        shell: bash
+        run: |
+          {
+            echo "## Staging release"
+            echo "Commit: $GITHUB_SHA"
+            echo "Check all three Staging slots before approving the production environment:"
+            while IFS='|' read -r app project; do
+              host=$(az functionapp show --resource-group "$AZURE_RESOURCE_GROUP" \
+                --name "$app" --slot "$AZURE_SLOT" --query defaultHostName --output tsv)
+              echo "- $app: https://$host"
+            done <<< "$FUNCTION_APPS"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  production:
+    name: Approve and swap Staging into production
+    needs: staging
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    environment: production
+    env:
+      RELEASE_ID: ${{ needs.staging.outputs.release_id }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Log in to Azure with OIDC
+        uses: Azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Swap tested Staging slots into production
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_ID"
+          slot_ids=()
+          while IFS='|' read -r app project; do
+            slot_id=$(az functionapp show --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$app" --slot "$AZURE_SLOT" --query id --output tsv)
+            deployed_release=$(az tag list --resource-id "$slot_id" \
+              --query 'properties.tags."cac-release"' --output tsv)
+            if [[ "$deployed_release" != "$RELEASE_ID" ]]; then
+              echo "::error::$app no longer contains this approved release, or a swap was already attempted."
+              exit 1
+            fi
+            slot_ids+=("$slot_id")
+          done <<< "$FUNCTION_APPS"
+          # Consume every marker before swapping so retries cannot swap old code back.
+          for slot_id in "${slot_ids[@]}"; do
+            az tag update --resource-id "$slot_id" --operation Merge \
+              --tags "cac-release=swap-started-$RELEASE_ID" --output none
+          done
+          while IFS='|' read -r app project; do
+            az functionapp deployment slot swap \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$app" --slot "$AZURE_SLOT" \
+              --target-slot production --only-show-errors
+            echo "- Swapped $app from $AZURE_SLOT into production." >> "$GITHUB_STEP_SUMMARY"
+          done <<< "$FUNCTION_APPS"

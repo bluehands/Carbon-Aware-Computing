@@ -101,6 +101,35 @@ Every backgroud job with a `CarbonAwareExectution` parameter will now be schedul
 
 ## Web API
 
+### Azure Functions CI/CD
+
+The GitHub Actions workflow `.github/workflows/azure-functions.yml` runs on pushes to every branch except `main`. It restores, builds and tests the solution in Release mode, then publishes one ZIP artifact per Function App:
+
+| Project | Azure Function App |
+| --- | --- |
+| `CarbonAwareComputing.ExecutionForecast.Function` | `CarbonAwareComputingExecutionForecast` |
+| `CarbonAwareComputing.ForecastUpdater.Function` | `CarbonAwareComputingForecastUpdaterFunction` |
+| `CarbonAwareComputing.GridCarbonIntensity.Function` | `CarbonAwareComputingGridCarbonIntensity` |
+
+All apps use resource group `Carbon-Aware-Computing`, Linux plan `CarbonAwareComputingAppServicePlan` and an existing slot named `Staging`. The workflow deploys all three packages to those slots. After a successful manual check and approval of the GitHub environment `production`, it swaps the tested slots into production without rebuilding.
+
+Before enabling deployments:
+
+- Create GitHub environments named `staging` and `production`. Configure the existing reviewers as **required reviewers on `production`**, with administrator bypass disabled where available. Merely assigning PR reviewers does not protect production deployments. Allow the intended non-`main` branches in both environments' deployment rules.
+- Provide `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` as GitHub secrets or variables, either repository-wide or in both environments. Secrets take precedence over variables. Use the target subscription's UUID for `AZURE_SUBSCRIPTION_ID`.
+- Configure Azure OIDC federated credentials for both environment subjects: `repo:bluehands/Carbon-Aware-Computing:environment:staging` and `repo:bluehands/Carbon-Aware-Computing:environment:production`. Existing branch-based OIDC credentials alone do not cover these jobs.
+- Grant the deployment identity permission to deploy ZIP packages, read slot details, read/update slot resource tags and swap slots on the three apps. Ensure the slots, deployment endpoint access and matching runtime configuration exist. Disable remote build in the slots' deployment configuration; the workflow deploys already-published packages.
+- Separate Staging storage, queues and other data sources from production, and mark environment-specific settings as deployment-slot settings so they stay with their slot during swaps. Disable side-effecting background triggers in Staging where appropriate; check their behavior during swap warm-up as well.
+- The projects currently target .NET 6 in-process / Azure Functions v4. The workflow installs .NET 8 for the C# 12 compiler features used by the shared library, and .NET 6 to run the existing tests; this does not change the deployment target. .NET 6 is out of support; confirm Azure runtime compatibility before deployment and plan a separate runtime migration.
+
+The Staging job summary contains the deployed commit and links for manual inspection. Review all three apps, including the ForecastUpdater's background processing, before approving production.
+
+A workflow-wide concurrency group serializes releases across branches, including the approval wait, to prevent another run from replacing the shared Staging slots during review. Reject or cancel an unwanted release to unblock the next one. GitHub may replace an older pending run with a newer pending run; not every push is guaranteed to deploy. Do not deploy to or swap these slots outside this workflow while a release is awaiting approval.
+
+Each Staging slot has a `cac-release` resource tag identifying the workflow run, attempt and commit. Production checks all three tags against the approved release and consumes all markers before starting any swap. This blocks stale production-job reruns and prevents a retry from swapping the previous production version back. Do not edit these tags manually.
+
+The three swaps are sequential, not atomic. If a swap fails, inspect the job summary and Azure slot state before recovering the remaining apps. Once swap markers are consumed, automatic production-job retries deliberately fail closed, even if no swap completed. Start a fresh full deployment and review, or have an operator recover the slots after checking their state. After a successful swap, Staging contains the previous production version until the next deployment.
+
 We provide a live and ready to use subset of the Carbon Aware SDK. The API is available from this location: [https://forecast.carbon-aware-computing.com/](https://forecast.carbon-aware-computing.com/). Use the Swagger UI [https://forecast.carbon-aware-computing.com/swagger/UI](https://forecast.carbon-aware-computing.com/swagger/UI) to play around with the API.
 
 We also provide an endpoint to get the actual grid carbon intensity. The API is available from this location: [https://intensity.carbon-aware-computing.com/](https://intensity.carbon-aware-computing.com/). Use the Swagger UI [https://intensity.carbon-aware-computing.com/swagger/UI](https://intensity.carbon-aware-computing.com/swagger/UI) to play around with the API.
