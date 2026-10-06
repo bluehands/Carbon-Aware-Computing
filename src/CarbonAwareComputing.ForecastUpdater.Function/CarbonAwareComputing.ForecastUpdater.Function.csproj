@@ -18,6 +18,10 @@
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.6.0" />
   </ItemGroup>
   <ItemGroup>
+    <FunctionsPreservedDependencies Include="System.Text.Json.dll" />
+    <FunctionsPreservedDependencies Include="System.Text.Encodings.Web.dll" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CarbonAwareComputing.ForecastUpdater\CarbonAwareComputing.ForecastUpdater.csproj" />
   </ItemGroup>
   <ItemGroup>

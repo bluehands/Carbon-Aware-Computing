@@ -17,6 +17,10 @@
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
+    <FunctionsPreservedDependencies Include="System.Text.Json.dll" />
+    <FunctionsPreservedDependencies Include="System.Text.Encodings.Web.dll" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\CarbonAwareComputing\CarbonAwareComputing.csproj" />
     <ProjectReference Include="..\CarbonAwareComputing.Functions\CarbonAwareComputing.Functions.csproj" />
   </ItemGroup>
