@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
@@ -27,42 +27,41 @@ namespace CarbonAwareComputing.ForecastUpdater.Function
         private readonly IOptions<ApplicationSettings> m_ApplicationSettings;
         private readonly List<string> m_WriteHistoryFor;
         private readonly HttpClient m_Http;
+        private readonly ILogger<ForecastUpdateFunction> m_Logger;
 
-        public ForecastUpdateFunction(IHttpClientFactory httpClientFactory, IOptions<ApplicationSettings> applicationSettings)
+        public ForecastUpdateFunction(IHttpClientFactory httpClientFactory, IOptions<ApplicationSettings> applicationSettings, ILogger<ForecastUpdateFunction> logger)
         {
             m_ApplicationSettings = applicationSettings;
             m_WriteHistoryFor = m_ApplicationSettings.Value is { WriteHistoryFor: not null } ? m_ApplicationSettings.Value.WriteHistoryFor.Split(",").ToList() : new List<string>();
             m_Http = httpClientFactory.CreateClient();
+            m_Logger = logger;
         }
 
 
-        [FunctionName("ScheduledUpdateForecast")]
-        public async Task ScheduledUpdateForecast([TimerTrigger("0 20 8,12,16,18,19,20 * * *")] TimerInfo myTimer, ILogger log)
+        [Function("ScheduledUpdateForecast")]
+        public async Task ScheduledUpdateForecast([TimerTrigger("0 20 8,12,16,18,19,20 * * *")] TimerInfo myTimer)
         {
-            await UpdateForecast(log);
+            await UpdateForecast(m_Logger);
         }
 
-        [FunctionName("ScheduledReportForecast")]
-        public async Task ScheduledReportForecast([TimerTrigger("0 20 8 * * *")] TimerInfo myTimer, ExecutionContext context, ILogger log)
+        [Function("ScheduledReportForecast")]
+        public async Task ScheduledReportForecast([TimerTrigger("0 20 8 * * *")] TimerInfo myTimer)
         {
-            await ReportForecast(log, context.FunctionAppDirectory);
+            await ReportForecast(m_Logger, AppContext.BaseDirectory);
         }
-        [FunctionName("ManualUpdateForecast")]
+        [Function("ManualUpdateForecast")]
         public async Task<IActionResult> ManualUpdateForecast(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            ILogger log)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req)
         {
-            await UpdateForecast(log);
+            await UpdateForecast(m_Logger);
             return new OkObjectResult("Updated");
         }
 
-        [FunctionName("ManualReportForecast")]
+        [Function("ManualReportForecast")]
         public async Task<IActionResult> ManualReportForecast(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            ExecutionContext context,
-            ILogger log)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req)
         {
-            await ReportForecast(log, context.FunctionAppDirectory);
+            await ReportForecast(m_Logger, AppContext.BaseDirectory);
             return new OkObjectResult("Reported");
         }
 

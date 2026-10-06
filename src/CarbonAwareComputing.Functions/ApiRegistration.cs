@@ -1,4 +1,3 @@
-﻿using System.Web.Http;
 using Azure.Identity;
 using CarbonAwareComputing.ExecutionForecast.Function;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +42,7 @@ public class ApiRegistration
         catch (Exception ex)
         {
             log.LogError($"Unexpected Error. {ex}");
-            return new InternalServerErrorResult();
+            return new StatusCodeResult(500);
         }
     }
     private static async Task<bool> SendApiKeyAsync(ILogger log, string mailAddress, string mailFrom, string apiKey, string tenantId, string clientId, string clientSecret, string template)
