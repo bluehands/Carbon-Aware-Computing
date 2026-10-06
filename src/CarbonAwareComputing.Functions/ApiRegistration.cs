@@ -82,7 +82,7 @@ public class ApiRegistration
         }
         catch (Exception ex)
         {
-            log.LogError($"Could not send mail to {mailAddress}. Error: {ex.Message}");
+            log.LogError(ex, "Could not send API key email.");
             return false;
         }
     }
