@@ -1,8 +1,10 @@
 using System.Reflection;
+using System.Net.Http;
 using CarbonAwareComputing.ForecastUpdater.Function;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace CarbonAwareComputing.ForecastUpdater.Function;

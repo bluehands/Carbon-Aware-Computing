@@ -1,12 +1,12 @@
 using System.Reflection;
 using CarbonAwareComputing.Functions;
-using CarbonAwareComputing.GridCarbonIntensity;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-namespace CarbonAwareComputing.GridCarbonIntensity;
+namespace CarbonAwareComputing.GridCarbonIntensity.Function;
 
 public class Program
 {

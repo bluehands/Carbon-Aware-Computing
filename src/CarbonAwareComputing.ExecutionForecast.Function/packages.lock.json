@@ -14,16 +14,6 @@
           "System.Security.Cryptography.ProtectedData": "4.7.0"
         }
       },
-      "Microsoft.AspNetCore.Mvc.Abstractions": {
-        "type": "Direct",
-        "requested": "[2.2.0, )",
-        "resolved": "2.2.0",
-        "contentHash": "ET6uZpfVbGR1NjCuLaLy197cQ3qZUjzl7EG5SL4GfJH/c9KRE89MMBrQegqWsh0w1iRUB/zQaK0anAjxa/pz4g==",
-        "dependencies": {
-          "Microsoft.AspNetCore.Routing.Abstractions": "2.2.0",
-          "Microsoft.Net.Http.Headers": "2.2.0"
-        }
-      },
       "Microsoft.Azure.Functions.Worker": {
         "type": "Direct",
         "requested": "[2.52.0, )",
@@ -265,6 +255,15 @@
         "contentHash": "o9BB9hftnCsyJalz9IT0DUFxz8Xvgh3TOfGWolpuf19duxB4FySq7c25XDYBmBMS+sun5/PsEUAi58ra4iJAoA==",
         "dependencies": {
           "Newtonsoft.Json": "11.0.2"
+        }
+      },
+      "Microsoft.AspNetCore.Mvc.Abstractions": {
+        "type": "Transitive",
+        "resolved": "2.2.0",
+        "contentHash": "ET6uZpfVbGR1NjCuLaLy197cQ3qZUjzl7EG5SL4GfJH/c9KRE89MMBrQegqWsh0w1iRUB/zQaK0anAjxa/pz4g==",
+        "dependencies": {
+          "Microsoft.AspNetCore.Routing.Abstractions": "2.2.0",
+          "Microsoft.Net.Http.Headers": "2.2.0"
         }
       },
       "Microsoft.AspNetCore.Mvc.Core": {
@@ -959,12 +958,7 @@
         "dependencies": {
           "Azure.Identity": "[1.11.4, )",
           "CarbonAwareComputing": "[1.0.0, )",
-          "Microsoft.AspNetCore.Mvc.Abstractions": "[2.2.0, )",
-          "Microsoft.AspNetCore.Mvc.Core": "[2.2.0, )",
-          "Microsoft.AspNetCore.Mvc.WebApiCompatShim": "[2.2.0, )",
           "Microsoft.Azure.WebJobs.Extensions.OpenApi.Core": "[1.5.1, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[6.0.4, )",
-          "Microsoft.Extensions.Primitives": "[6.0.0, )",
           "Microsoft.Graph": "[4.50.0, )",
           "Newtonsoft.Json": "[13.0.1, )"
         }

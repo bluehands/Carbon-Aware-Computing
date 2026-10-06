@@ -110,7 +110,7 @@
                 "name": "[parameters('resourceName')]",
                 "kind": "functionapp",
                 "httpsOnly": true,
-                "reserved": false,
+                "reserved": true,
                 "serverFarmId": "[variables('appServicePlan_ResourceId')]",
                 "siteConfig": {
                   "alwaysOn": true,
