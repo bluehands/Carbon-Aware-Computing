@@ -16,7 +16,7 @@ concurrency:
 env:
   AZURE_RESOURCE_GROUP: Carbon-Aware-Computing
   AZURE_SLOT: Staging
-  FUNCTION_APPS: |
+  FUNCTION_APPS: |-
     CarbonAwareComputingExecutionForecast|CarbonAwareComputing.ExecutionForecast.Function
     CarbonAwareComputingForecastUpdaterFunction|CarbonAwareComputing.ForecastUpdater.Function
     CarbonAwareComputingGridCarbonIntensity|CarbonAwareComputing.GridCarbonIntensity.Function
@@ -26,6 +26,8 @@ jobs:
     name: Build, test and package
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    outputs:
+      artifact_name: ${{ steps.package.outputs.artifact_name }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -47,6 +49,7 @@ jobs:
         run: dotnet test src/CarbonAwareComputing.sln --configuration Release --no-build --no-restore
 
       - name: Publish deployment packages
+        id: package
         shell: bash
         run: |
           set -euo pipefail
@@ -57,11 +60,12 @@ jobs:
               --output "$RUNNER_TEMP/publish/$app"
             (cd "$RUNNER_TEMP/publish/$app" && zip -qr "$RUNNER_TEMP/packages/$app.zip" .)
           done <<< "$FUNCTION_APPS"
+          echo "artifact_name=azure-functions-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
 
       - name: Upload deployment packages
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: azure-functions-${{ github.run_id }}
+          name: ${{ steps.package.outputs.artifact_name }}
           path: ${{ runner.temp }}/packages/*.zip
           if-no-files-found: error
           retention-days: 30
@@ -81,7 +85,7 @@ jobs:
       - name: Download deployment packages
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: azure-functions-${{ github.run_id }}
+          name: ${{ needs.build.outputs.artifact_name }}
           path: ${{ runner.temp }}/packages
 
       - name: Log in to Azure with OIDC
