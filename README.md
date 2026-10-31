@@ -101,6 +101,90 @@ Every backgroud job with a `CarbonAwareExectution` parameter will now be schedul
 
 ## Web API
 
+### Azure Functions infrastructure deployment
+
+Each Function project has its own Azure Bicep deployment and variable file:
+
+| Project | Deployment | Variables |
+| --- | --- | --- |
+| `CarbonAwareComputing.ExecutionForecast.Function` | `deploy/execution-forecast.bicep` | `deploy/execution-forecast.bicepparam` |
+| `CarbonAwareComputing.GridCarbonIntensity.Function` | `deploy/grid-carbon-intensity.bicep` | `deploy/grid-carbon-intensity.bicepparam` |
+| `CarbonAwareComputing.ForecastUpdater.Function` | `deploy/forecast-updater.bicep` | `deploy/forecast-updater.bicepparam` |
+
+Each deployment creates a **Windows Consumption plan (Y1/Dynamic)**, a .NET 10
+isolated / Functions v4 app with a system-assigned managed identity, a private
+host Storage Account including an Azure Files content share, and workspace-based
+Application Insights. The shared module keeps the runtime configuration consistent.
+These templates provision infrastructure and settings, not application code or
+deployment slots. They are intended for new apps, not an in-place conversion of
+existing Linux apps/plans. Classic Linux Consumption does not support .NET 10.
+
+Use Azure CLI 2.76+ with a current Bicep CLI (`az bicep upgrade`). Edit each
+`.bicepparam` file to set globally unique Function App names (2-50 characters,
+letters, digits and hyphens), location, tags and, for the updater, the existing
+forecast storage resource group. The deployment subscription must contain the
+`carbonawarecomputing` Storage Account, its `forecasts` Blob container and its
+`forecasts` table. Their names are fixed in the updater code. The updater template
+grants its managed identity Storage Blob Data Contributor on that container and
+Storage Table Data Contributor on that table; it does not create or alter the
+forecast data store or its public read configuration. The deploying identity needs
+resource deployment permissions and permission to create those role assignments
+in the existing storage resource group. RBAC propagation can take several minutes.
+
+Supply `CAC_MAIL_FROM`, `CAC_TENANT_ID`, `CAC_CLIENT_ID` and `CAC_CLIENT_SECRET`
+through your shell environment or CI secret store. These configure the existing
+Microsoft Graph mail application, which needs the application permission
+`Mail.Send`, administrator consent and access to the sender mailbox. Also supply
+`CAC_API_KEY_PASSWORD` for the two APIs; use the **same password** for both so
+registered keys remain interchangeable. Do not put secrets in variable files.
+The secret parameters are marked secure; compiled parameter JSON still contains
+resolved secrets and must not be committed or retained in artifacts.
+
+From the repository root, after configuring the variables and logging in:
+
+``` bash
+az login
+az account set --subscription "<subscription-id>"
+az group create --name Carbon-Aware-Computing --location westeurope
+
+for deployment in execution-forecast grid-carbon-intensity forecast-updater; do
+  az deployment group what-if \
+    --resource-group Carbon-Aware-Computing \
+    --parameters "deploy/$deployment.bicepparam"
+done
+```
+
+Review the proposed changes, then provision each app:
+
+``` bash
+for deployment in execution-forecast grid-carbon-intensity forecast-updater; do
+  az deployment group create \
+    --name "$deployment" \
+    --resource-group Carbon-Aware-Computing \
+    --parameters "deploy/$deployment.bicepparam"
+done
+```
+
+Publish and deploy each project's code separately, using the app name from its
+variable file (or the deployment's `functionAppName` output). For example:
+
+``` bash
+dotnet publish src/CarbonAwareComputing.ExecutionForecast.Function \
+  --configuration Release --output /tmp/cac-execution-forecast
+(cd /tmp/cac-execution-forecast && zip -qr /tmp/cac-execution-forecast.zip .)
+az functionapp deployment source config-zip \
+  --resource-group Carbon-Aware-Computing \
+  --name "<execution-forecast-app-name>" \
+  --src /tmp/cac-execution-forecast.zip --build-remote false
+```
+
+Repeat for GridCarbonIntensity and ForecastUpdater with separate output directories
+and ZIP files. ZIP roots must contain `host.json` and the published worker files.
+The apps run prebuilt packages (`WEBSITE_RUN_FROM_PACKAGE=1`).
+The updater's timers are active after code deployment and write to the existing
+shared forecast store; schedules use UTC. Set `writeHistoryFor` in its variable
+file to a comma-separated list of location names to retain history.
+
 We provide a live and ready to use subset of the Carbon Aware SDK. The API is available from this location: [https://forecast.carbon-aware-computing.com/](https://forecast.carbon-aware-computing.com/). Use the Swagger UI [https://forecast.carbon-aware-computing.com/swagger/UI](https://forecast.carbon-aware-computing.com/swagger/UI) to play around with the API.
 
 We also provide an endpoint to get the actual grid carbon intensity. The API is available from this location: [https://intensity.carbon-aware-computing.com/](https://intensity.carbon-aware-computing.com/). Use the Swagger UI [https://intensity.carbon-aware-computing.com/swagger/UI](https://intensity.carbon-aware-computing.com/swagger/UI) to play around with the API.
