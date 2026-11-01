@@ -75,7 +75,7 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
         [OpenApiParameter(name: "windowSize", In = ParameterLocation.Query, Required = false, Type = typeof(int), Example = typeof(WindowSizeExample), Description = "The estimated duration (in minutes) of the workload. Defaults to 5 Minutes (This is different from GSF SDK which default to the duration of a single forecast data point).")]
         [OpenApiSecurity("apikey", SecuritySchemeType.ApiKey, In = OpenApiSecurityLocationType.Header, Name = "x-api-key")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(IEnumerable<EmissionsForecast>), Summary = "Forecast available. Operation succeeded", Description = "Forecast data is available and the best execution time is provided. This is a subset of the GSF SDK data. No information on the underlying forecast data ist provided. E.g. no forecast boundaries, no forcast data, no forecast generation date")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.NotFound, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "Forecast is not available for the location or time window. Operation failed", Description = "Forecast is not available for the location or time window. Operation failed")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Gone, contentType: "application/problem+json", bodyType: typeof(ProblemDetails), Summary = "Forecast is not available for the location or time window. Operation failed", Description = "The current forecast does not cover the requested location, time period, and workload duration. Problem details describe the request and possible causes.")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "failed operation", Description = "failed operation")]
         [Function("GetBestExecutionTime")]
         public async Task<IActionResult> GetBestExecutionTime(
@@ -165,7 +165,22 @@ namespace CarbonAwareComputing.ExecutionForecast.Function
                     return new OkObjectResult(forecasts);
                 }
 
-                return new NotFoundResult();
+                return new ObjectResult(new ProblemDetails()
+                {
+                    Type = "https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.11",
+                    Title = "Forecast data unavailable",
+                    Status = Convert.ToInt32(HttpStatusCode.Gone),
+                    Detail = $"No forecast data is available for location(s) '{location.First()}' "
+                        + $"from {(dataStartAt == DateTimeOffset.MinValue ? "the earliest available forecast time" : dataStartAt.ToString("O"))} "
+                        + $"to {(dataEndAt == DateTimeOffset.MaxValue ? "the latest available forecast time" : dataEndAt.ToString("O"))} "
+                        + $"with a workload duration of {windowSize} minutes. "
+                        + "The current forecast may be outdated or may not cover the requested location, time period, or workload duration. "
+                        + "Request a period covered by the current forecast or retry after forecast data has been refreshed."
+                })
+                {
+                    StatusCode = Convert.ToInt32(HttpStatusCode.Gone),
+                    ContentTypes = { "application/problem+json" }
+                };
             }
             catch (Exception ex)
             {
