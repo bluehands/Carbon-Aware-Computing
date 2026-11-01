@@ -31,6 +31,12 @@ module app './modules/cac-windows-consumption-function.bicep' = {
       ApplicationSettings__ClientId: clientId
       ApplicationSettings__ClientSecret: clientSecret
       ApplicationSettings__WriteHistoryFor: writeHistoryFor
+      'AzureWebJobs.ScheduledUpdateForecast.Disabled': 'false'
+      'AzureWebJobs.ScheduledReportForecast.Disabled': 'false'
+    }
+    stagingApplicationSettings: {
+      'AzureWebJobs.ScheduledUpdateForecast.Disabled': 'true'
+      'AzureWebJobs.ScheduledReportForecast.Disabled': 'true'
     }
   }
 }
@@ -43,5 +49,15 @@ module forecastStorageAccess './modules/cac-forecast-storage-access.bicep' = {
   }
 }
 
+module stagingForecastStorageAccess './modules/cac-forecast-storage-access.bicep' = {
+  name: '${functionAppName}-staging-rbac'
+  scope: resourceGroup(forecastStorageResourceGroup)
+  params: {
+    principalId: app.outputs.stagingPrincipalId
+  }
+}
+
 output functionAppName string = app.outputs.functionAppName
 output functionAppUrl string = app.outputs.functionAppUrl
+output stagingSlotName string = app.outputs.stagingSlotName
+output stagingSlotUrl string = app.outputs.stagingSlotUrl

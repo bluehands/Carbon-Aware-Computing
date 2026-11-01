@@ -36,3 +36,5 @@ module app './modules/cac-windows-consumption-function.bicep' = {
 
 output functionAppName string = app.outputs.functionAppName
 output functionAppUrl string = app.outputs.functionAppUrl
+output stagingSlotName string = app.outputs.stagingSlotName
+output stagingSlotUrl string = app.outputs.stagingSlotUrl

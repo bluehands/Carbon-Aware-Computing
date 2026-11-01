@@ -114,9 +114,14 @@ Each Function project has its own Azure Bicep deployment and variable file:
 Each deployment creates a **Windows Consumption plan (Y1/Dynamic)**, a .NET 10
 isolated / Functions v4 app with a system-assigned managed identity, a private
 host Storage Account including an Azure Files content share, and workspace-based
-Application Insights. The shared module keeps the runtime configuration consistent.
-These templates provision infrastructure and settings, not application code or
-deployment slots. They are intended for new apps, not an in-place conversion of
+Application Insights. Each app also gets a deployment slot named `Staging` on the
+same plan, with its own system-assigned identity, host Storage Account and content
+share. Both slots use the same .NET runtime and Application Insights configuration.
+Host storage connections and Staging-specific settings stay with their slot during
+swaps. Azure manages the content share setting's swap behavior automatically.
+The shared module keeps the runtime configuration consistent.
+These templates provision infrastructure and settings, not application code.
+They are intended for new apps, not an in-place conversion of
 existing Linux apps/plans. Classic Linux Consumption does not support .NET 10.
 
 Use Azure CLI 2.76+ with a current Bicep CLI (`az bicep upgrade`). Edit each
@@ -125,7 +130,7 @@ letters, digits and hyphens), location, tags and, for the updater, the existing
 forecast storage resource group. The deployment subscription must contain the
 `carbonawarecomputing` Storage Account, its `forecasts` Blob container and its
 `forecasts` table. Their names are fixed in the updater code. The updater template
-grants its managed identity Storage Blob Data Contributor on that container and
+grants both its production and Staging managed identities Storage Blob Data Contributor on that container and
 Storage Table Data Contributor on that table; it does not create or alter the
 forecast data store or its public read configuration. The deploying identity needs
 resource deployment permissions and permission to create those role assignments
@@ -181,9 +186,15 @@ az functionapp deployment source config-zip \
 Repeat for GridCarbonIntensity and ForecastUpdater with separate output directories
 and ZIP files. ZIP roots must contain `host.json` and the published worker files.
 The apps run prebuilt packages (`WEBSITE_RUN_FROM_PACKAGE=1`).
+To deploy a package to Staging instead of production, add `--slot Staging` to the
+`az functionapp deployment source config-zip` command. Each template also exposes
+`stagingSlotName` and `stagingSlotUrl` outputs. No automatic slot swap is configured.
 The updater's timers are active after code deployment and write to the existing
 shared forecast store; schedules use UTC. Set `writeHistoryFor` in its variable
 file to a comma-separated list of location names to retain history.
+In Staging, `ScheduledUpdateForecast` and `ScheduledReportForecast` are disabled
+using slot-specific settings to prevent duplicate updates and reports. Manual
+updater HTTP triggers still access the shared forecast store.
 ### Manual infrastructure and Functions deployment
 
 The separate workflow `.github/workflows/azure-functions-infrastructure.yml`
@@ -197,7 +208,8 @@ The deployment uses the existing GitHub environment `dev`, resource group
 `Carbon-Aware-Computing` and the names/location/tags in `deploy/*.bicepparam`.
 Adjust those non-secret values before running if necessary. The resource group
 is created in `westeurope` if absent. This deploys directly to the new Windows
-Consumption apps, not to slots or the existing Linux apps.
+Consumption apps' production slots, not to their newly provisioned Staging slots
+or the existing Linux apps.
 
 Reuse the existing authentication names `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`
 and `AZURE_SUBSCRIPTION_ID` as repository or `dev` environment secrets/variables
