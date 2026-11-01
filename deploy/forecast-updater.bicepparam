@@ -1,6 +1,6 @@
 using './forecast-updater.bicep'
 
-param functionAppName = 'cac-forecast-updater-dev'
+param functionAppName = 'cac-forecast-updater'
 param location = 'westeurope'
 param tags = {
   application: 'Carbon-Aware-Computing'
