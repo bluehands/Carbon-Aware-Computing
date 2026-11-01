@@ -229,7 +229,6 @@ resource slotSettings 'Microsoft.Web/sites/config@2024-04-01' = {
   properties: {
     appSettingNames: concat([
       'AzureWebJobsStorage'
-      'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
     ], stagingSlotSettingNames)
   }
 }
