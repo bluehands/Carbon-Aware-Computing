@@ -17,9 +17,9 @@ env:
   AZURE_RESOURCE_GROUP: Carbon-Aware-Computing
   AZURE_SLOT: Staging
   FUNCTION_APPS: |-
-    CarbonAwareComputingExecutionForecast|CarbonAwareComputing.ExecutionForecast.Function
-    CarbonAwareComputingForecastUpdaterFunction|CarbonAwareComputing.ForecastUpdater.Function
-    CarbonAwareComputingGridCarbonIntensity|CarbonAwareComputing.GridCarbonIntensity.Function
+    cac-execution-forecast|CarbonAwareComputing.ExecutionForecast.Function
+    cac-grid-carbon-intensity|CarbonAwareComputing.GridCarbonIntensity.Function
+    cac-forecast-updater|CarbonAwareComputing.ForecastUpdater.Function
 
 jobs:
   build:
@@ -35,9 +35,7 @@ jobs:
 
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
-          dotnet-version: |
-            6.0.x
-            8.0.x
+          dotnet-version:  10.0.x
 
       - name: Restore
         run: dotnet restore src/CarbonAwareComputing.sln
