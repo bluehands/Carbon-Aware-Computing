@@ -1,4 +1,4 @@
-using './execution-forecast.bicep'
+using './cac-execution-forecast.bicep'
 
 param functionAppName = 'cac-execution-forecast'
 param location = 'westeurope'

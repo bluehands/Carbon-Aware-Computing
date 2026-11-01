@@ -18,7 +18,7 @@ param clientSecret string
 @minLength(1)
 param apiKeyPassword string
 
-module app './modules/windows-consumption-function.bicep' = {
+module app './modules/cac-windows-consumption-function.bicep' = {
   name: '${functionAppName}-infra'
   params: {
     functionAppName: functionAppName
