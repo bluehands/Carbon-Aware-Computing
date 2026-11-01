@@ -101,6 +101,139 @@ Every backgroud job with a `CarbonAwareExectution` parameter will now be schedul
 
 ## Web API
 
+### Azure Functions infrastructure deployment
+
+Each Function project has its own Azure Bicep deployment and variable file:
+
+| Project | Deployment | Variables |
+| --- | --- | --- |
+| `CarbonAwareComputing.ExecutionForecast.Function` | `deploy/execution-forecast.bicep` | `deploy/execution-forecast.bicepparam` |
+| `CarbonAwareComputing.GridCarbonIntensity.Function` | `deploy/grid-carbon-intensity.bicep` | `deploy/grid-carbon-intensity.bicepparam` |
+| `CarbonAwareComputing.ForecastUpdater.Function` | `deploy/forecast-updater.bicep` | `deploy/forecast-updater.bicepparam` |
+
+Each deployment creates a **Windows Consumption plan (Y1/Dynamic)**, a .NET 10
+isolated / Functions v4 app with a system-assigned managed identity, a private
+host Storage Account including an Azure Files content share, and workspace-based
+Application Insights. The shared module keeps the runtime configuration consistent.
+These templates provision infrastructure and settings, not application code or
+deployment slots. They are intended for new apps, not an in-place conversion of
+existing Linux apps/plans. Classic Linux Consumption does not support .NET 10.
+
+Use Azure CLI 2.76+ with a current Bicep CLI (`az bicep upgrade`). Edit each
+`.bicepparam` file to set globally unique Function App names (2-50 characters,
+letters, digits and hyphens), location, tags and, for the updater, the existing
+forecast storage resource group. The deployment subscription must contain the
+`carbonawarecomputing` Storage Account, its `forecasts` Blob container and its
+`forecasts` table. Their names are fixed in the updater code. The updater template
+grants its managed identity Storage Blob Data Contributor on that container and
+Storage Table Data Contributor on that table; it does not create or alter the
+forecast data store or its public read configuration. The deploying identity needs
+resource deployment permissions and permission to create those role assignments
+in the existing storage resource group. RBAC propagation can take several minutes.
+
+Supply `CAC_MAIL_FROM`, `CAC_TENANT_ID`, `CAC_CLIENT_ID` and `CAC_CLIENT_SECRET`
+through your shell environment or CI secret store. These configure the existing
+Microsoft Graph mail application, which needs the application permission
+`Mail.Send`, administrator consent and access to the sender mailbox. Also supply
+`CAC_API_KEY_PASSWORD` for the two APIs; use the **same password** for both so
+registered keys remain interchangeable. Do not put secrets in variable files.
+The secret parameters are marked secure; compiled parameter JSON still contains
+resolved secrets and must not be committed or retained in artifacts.
+
+From the repository root, after configuring the variables and logging in:
+
+``` bash
+az login
+az account set --subscription "<subscription-id>"
+az group create --name Carbon-Aware-Computing --location westeurope
+
+for deployment in execution-forecast grid-carbon-intensity forecast-updater; do
+  az deployment group what-if \
+    --resource-group Carbon-Aware-Computing \
+    --parameters "deploy/$deployment.bicepparam"
+done
+```
+
+Review the proposed changes, then provision each app:
+
+``` bash
+for deployment in execution-forecast grid-carbon-intensity forecast-updater; do
+  az deployment group create \
+    --name "$deployment" \
+    --resource-group Carbon-Aware-Computing \
+    --parameters "deploy/$deployment.bicepparam"
+done
+```
+
+Publish and deploy each project's code separately, using the app name from its
+variable file (or the deployment's `functionAppName` output). For example:
+
+``` bash
+dotnet publish src/CarbonAwareComputing.ExecutionForecast.Function \
+  --configuration Release --output /tmp/cac-execution-forecast
+(cd /tmp/cac-execution-forecast && zip -qr /tmp/cac-execution-forecast.zip .)
+az functionapp deployment source config-zip \
+  --resource-group Carbon-Aware-Computing \
+  --name "<execution-forecast-app-name>" \
+  --src /tmp/cac-execution-forecast.zip --build-remote false
+```
+
+Repeat for GridCarbonIntensity and ForecastUpdater with separate output directories
+and ZIP files. ZIP roots must contain `host.json` and the published worker files.
+The apps run prebuilt packages (`WEBSITE_RUN_FROM_PACKAGE=1`).
+The updater's timers are active after code deployment and write to the existing
+shared forecast store; schedules use UTC. Set `writeHistoryFor` in its variable
+file to a comma-separated list of location names to retain history.
+### Manual infrastructure and Functions deployment
+
+The separate workflow `.github/workflows/azure-functions-infrastructure.yml`
+is triggered only via `workflow_dispatch`. It builds and tests the solution using
+.NET 10 (and .NET 6 for the existing tests), packages all three Functions, validates
+all three Bicep parameter files, then provisions and deploys each app. App names
+are read from the Bicep deployment outputs, not duplicated in the workflow.
+The existing push/Staging workflow is unchanged.
+
+The deployment uses the existing GitHub environment `dev`, resource group
+`Carbon-Aware-Computing` and the names/location/tags in `deploy/*.bicepparam`.
+Adjust those non-secret values before running if necessary. The resource group
+is created in `westeurope` if absent. This deploys directly to the new Windows
+Consumption apps, not to slots or the existing Linux apps.
+
+Reuse the existing authentication names `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`
+and `AZURE_SUBSCRIPTION_ID` as repository or `dev` environment secrets/variables
+(secrets take precedence). These identify the Azure deployment identity, not
+the Microsoft Graph mail application. Configure an OIDC federated credential
+with subject `repo:bluehands/Carbon-Aware-Computing:environment:dev`.
+The identity needs resource group creation/deployment, ZIP deployment and role
+assignment permissions on the existing forecast storage resource group.
+
+Create the following GitHub Actions secrets in the repository or `dev`
+environment if they are not already present:
+
+| Secret | Value |
+| --- | --- |
+| `CAC_MAIL_FROM` | Sender mailbox for registration/notification mail |
+| `CAC_TENANT_ID` | Microsoft Graph mail application's tenant ID |
+| `CAC_CLIENT_ID` | Microsoft Graph mail application's client ID |
+| `CAC_CLIENT_SECRET` | Microsoft Graph mail application's client secret |
+| `CAC_API_KEY_PASSWORD` | Shared API-key password for both APIs |
+
+The workflow passes these secrets as environment variables to the existing
+`readEnvironmentVariable(...)` calls in the parameter files. It fails explicitly
+on missing configuration and does not upload resolved parameter files or print
+deployment settings. The secret inventory could not be verified from the coding
+session (Actions secrets API returned HTTP 403), so this is a required-secret
+list, not a confirmed list of missing secrets.
+
+After merging the workflow into the default branch, open **Actions > Deploy Azure
+Functions and infrastructure > Run workflow** and select the branch containing
+the .NET 10 projects and Bicep files. Ensure `dev` deployment branch rules permit
+that branch; configure environment approval rules if desired. Starting the
+workflow provisions Azure resources and deploys code; ForecastUpdater timers
+become active and write to the existing shared forecast store. The run summary
+contains the deployed commit and app URLs. No Azure deployment is performed
+merely by adding this workflow.
+
 ### Azure Functions CI/CD
 
 The GitHub Actions workflow `.github/workflows/azure-functions.yml` runs on pushes to every branch except `main`. It restores, builds and tests the solution in Release mode, then publishes one ZIP artifact per Function App:

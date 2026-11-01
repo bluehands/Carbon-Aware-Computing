@@ -3,12 +3,11 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using System.Web.Http;
 using CarbonAwareComputing.ExecutionForecast.Function;
 using CarbonAwareComputing.Functions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
@@ -22,41 +21,42 @@ namespace CarbonAwareComputing.GridCarbonIntensity.Function
     {
         private readonly IOptions<ApplicationSettings> m_ApplicationSettings;
         private readonly CarbonAwareDataProvider m_Provider;
+        private readonly ILogger<GridCarbonIntensityFunction> m_Logger;
 
         public GridCarbonIntensityFunction(
             IOptions<ApplicationSettings> applicationSettings,
-            CarbonAwareDataProvider provider
+            CarbonAwareDataProvider provider,
+            ILogger<GridCarbonIntensityFunction> logger
             )
         {
             m_ApplicationSettings = applicationSettings;
             m_Provider = provider;
+            m_Logger = logger;
         }
 
         [OpenApiOperation(operationId: "Register", tags: new[] { "Usage" }, Summary = "Register yourself to the Carbon Aware Computing API. A API-Key is send to your mail address. The address is only used to inform you about incompatible changes to this service.", Description = "Register yourself to this API.", Visibility = OpenApiVisibilityType.Important)]
         [OpenApiRequestBody("application/json", typeof(RegistrationData), Required = true, Description = "The mail address API-Key ist send")]
         [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NoContent, Summary = "API-Key sent. Operation succeeded", Description = "API-Key sent. Operation succeeded")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "failed operation", Description = "failed operation")]
-        [FunctionName("Register")]
+        [Function("Register")]
         public async Task<IActionResult> Register(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "register")]
-            HttpRequest req,
-            ExecutionContext context,
-            ILogger log)
+            HttpRequest req)
         {
             try
             {
-                var template = await File.ReadAllTextAsync(Path.Combine(context.FunctionAppDirectory, "mail_template.txt"));
+                var template = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "mail_template.txt"));
                 var apiKeyPassword = m_ApplicationSettings.Value.ApiKeyPassword!;
                 var mailFrom = m_ApplicationSettings.Value.MailFrom;
                 var tenantId = m_ApplicationSettings.Value.TenantId;
                 var clientId = m_ApplicationSettings.Value.ClientId;
                 var clientSecret = m_ApplicationSettings.Value.ClientSecret;
-                return await ApiRegistration.Register(req.Body, apiKeyPassword!, template, mailFrom, tenantId, clientId, clientSecret, log);
+                return await ApiRegistration.Register(req.Body, apiKeyPassword!, template, mailFrom, tenantId, clientId, clientSecret, m_Logger);
             }
             catch (Exception ex)
             {
-                log.LogError($"Unexpected Error. {ex}");
-                return new InternalServerErrorResult();
+                m_Logger.LogError($"Unexpected Error. {ex}");
+                return new StatusCodeResult(500);
             }
         }
 
@@ -66,11 +66,10 @@ namespace CarbonAwareComputing.GridCarbonIntensity.Function
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(EmissionData), Summary = "Carbon intensity available. Operation succeeded", Description = "Grid carbon intensity is available for this location and provided.")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.NotFound, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "Carbon intensity is not available for the location or time window. Operation failed", Description = "Forecast is not available for the location. Operation failed")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(ProblemDetails), Summary = "failed operation", Description = "failed operation")]
-        [FunctionName("GetCurrentGridCarbonIntensity")]
+        [Function("GetCurrentGridCarbonIntensity")]
         public async Task<IActionResult> GetCurrentGridCarbonIntensity(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "emissions/current")]
-            HttpRequest req,
-            ILogger log)
+            HttpRequest req)
         {
             try
             {
@@ -114,18 +113,17 @@ namespace CarbonAwareComputing.GridCarbonIntensity.Function
             }
             catch (Exception ex)
             {
-                log.LogError($"Unexpected Error. {ex}");
-                return new InternalServerErrorResult();
+                m_Logger.LogError($"Unexpected Error. {ex}");
+                return new StatusCodeResult(500);
             }
         }
 
         [OpenApiOperation(operationId: "GetLocations", tags: new[] { "Usage" }, Summary = "Get a list of available locations. Not all locations are active, to avoid unnecessary computing. Send a message to 'a.mirmohammadi@bluehands.de' to activate a location.", Description = "Get a list of available locations. Not all locations are active, to avoid unnecessary computing. Send a message to 'a.mirmohammadi@bluehands.de' to activate a location.", Visibility = OpenApiVisibilityType.Important)]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(AvailableLocation[]), Summary = "Operation succeeded", Description = "Operation succeeded")]
-        [FunctionName("GetLocations")]
+        [Function("GetLocations")]
         public IActionResult GetLocations(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "locations")]
-            HttpRequest req,
-            ILogger log)
+            HttpRequest req)
         {
             return new OkObjectResult(ComputingLocations.All.Select(c => new AvailableLocation(c)));
         }

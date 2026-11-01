@@ -1,0 +1,172 @@
+name: Deploy Azure Functions and infrastructure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Serialize infrastructure and code deployments across branches.
+concurrency:
+  group: azure-functions-release
+  cancel-in-progress: false
+
+env:
+  AZURE_RESOURCE_GROUP: Carbon-Aware-Computing
+  AZURE_LOCATION: westeurope
+  FUNCTION_APPS: |-
+    cac-execution-forecast|CarbonAwareComputing.ExecutionForecast.Function
+    cac-grid-carbon-intensity|CarbonAwareComputing.GridCarbonIntensity.Function
+    cac-forecast-updater|CarbonAwareComputing.ForecastUpdater.Function
+
+jobs:
+  build:
+    name: Build, test and package
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    outputs:
+      artifact_name: ${{ steps.package.outputs.artifact_name }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore src/CarbonAwareComputing.sln
+
+      - name: Build
+        run: dotnet build src/CarbonAwareComputing.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test src/CarbonAwareComputing.sln --configuration Release --no-build --no-restore
+
+      - name: Publish deployment packages
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/packages"
+          while IFS='|' read -r deployment project; do
+            dotnet publish "src/$project/$project.csproj" \
+              --configuration Release --no-build --no-restore \
+              --output "$RUNNER_TEMP/publish/$deployment"
+            test -f "$RUNNER_TEMP/publish/$deployment/host.json"
+            test -f "$RUNNER_TEMP/publish/$deployment/worker.config.json"
+            (cd "$RUNNER_TEMP/publish/$deployment" && zip -qr "$RUNNER_TEMP/packages/$deployment.zip" .)
+          done <<< "$FUNCTION_APPS"
+          echo "artifact_name=azure-functions-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+
+      - name: Upload deployment packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: ${{ runner.temp }}/packages/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  deploy:
+    name: Provision infrastructure and deploy all Functions
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Download deployment packages
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ${{ needs.build.outputs.artifact_name }}
+          path: ${{ runner.temp }}/packages
+
+      - name: Check required configuration
+        shell: bash
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID || vars.AZURE_SUBSCRIPTION_ID }}
+          CAC_MAIL_FROM: ${{ secrets.CAC_MAIL_FROM }}
+          CAC_TENANT_ID: ${{ secrets.CAC_TENANT_ID }}
+          CAC_CLIENT_ID: ${{ secrets.CAC_CLIENT_ID }}
+          CAC_CLIENT_SECRET: ${{ secrets.CAC_CLIENT_SECRET }}
+          CAC_API_KEY_PASSWORD: ${{ secrets.CAC_API_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID \
+            CAC_MAIL_FROM CAC_TENANT_ID CAC_CLIENT_ID CAC_CLIENT_SECRET CAC_API_KEY_PASSWORD; do
+            if [[ -z "$(printenv "$name")" ]]; then
+              echo "::error::Missing configuration: $name (repository or dev environment)."
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Log in to Azure with OIDC
+        uses: Azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Bicep CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          az version --query '"azure-cli"' --output tsv
+          az bicep upgrade --only-show-errors
+
+      - name: Validate and deploy infrastructure and packages
+        shell: bash
+        env:
+          CAC_MAIL_FROM: ${{ secrets.CAC_MAIL_FROM }}
+          CAC_TENANT_ID: ${{ secrets.CAC_TENANT_ID }}
+          CAC_CLIENT_ID: ${{ secrets.CAC_CLIENT_ID }}
+          CAC_CLIENT_SECRET: ${{ secrets.CAC_CLIENT_SECRET }}
+          CAC_API_KEY_PASSWORD: ${{ secrets.CAC_API_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          az group create --name "$AZURE_RESOURCE_GROUP" \
+            --location "$AZURE_LOCATION" --output none --only-show-errors
+
+          # Validate every template before deploying the first Function App.
+          while IFS='|' read -r deployment project; do
+            az deployment group validate \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --parameters "deploy/$deployment.bicepparam" \
+              --output none --only-show-errors
+          done <<< "$FUNCTION_APPS"
+
+          {
+            echo "## Azure Functions deployment (dev)"
+            echo "Commit: $GITHUB_SHA"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          while IFS='|' read -r deployment project; do
+            app=$(az deployment group create \
+              --name "$deployment" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --parameters "deploy/$deployment.bicepparam" \
+              --query properties.outputs.functionAppName.value \
+              --output tsv --only-show-errors)
+            if [[ -z "$app" ]]; then
+              echo "::error::Deployment $deployment did not return a Function App name."
+              exit 1
+            fi
+            az functionapp deployment source config-zip \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$app" --src "$RUNNER_TEMP/packages/$deployment.zip" \
+              --build-remote false --output none --only-show-errors
+            host=$(az functionapp show --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$app" --query defaultHostName --output tsv --only-show-errors)
+            echo "- $app: https://$host" >> "$GITHUB_STEP_SUMMARY"
+          done <<< "$FUNCTION_APPS"
