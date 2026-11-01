@@ -1,6 +1,6 @@
-using './forecast-updater.bicep'
+using './cac-grid-carbon-intensity.bicep'
 
-param functionAppName = 'cac-forecast-updater'
+param functionAppName = 'cac-grid-carbon-intensity'
 param location = 'westeurope'
 param tags = {
   application: 'Carbon-Aware-Computing'
@@ -10,5 +10,4 @@ param mailFrom = readEnvironmentVariable('CAC_MAIL_FROM')
 param tenantId = readEnvironmentVariable('CAC_TENANT_ID')
 param clientId = readEnvironmentVariable('CAC_CLIENT_ID')
 param clientSecret = readEnvironmentVariable('CAC_CLIENT_SECRET')
-param forecastStorageResourceGroup = 'Carbon-Aware-Computing'
-param writeHistoryFor = ''
+param apiKeyPassword = readEnvironmentVariable('CAC_API_KEY_PASSWORD')

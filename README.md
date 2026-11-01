@@ -107,9 +107,9 @@ Each Function project has its own Azure Bicep deployment and variable file:
 
 | Project | Deployment | Variables |
 | --- | --- | --- |
-| `CarbonAwareComputing.ExecutionForecast.Function` | `deploy/execution-forecast.bicep` | `deploy/execution-forecast.bicepparam` |
-| `CarbonAwareComputing.GridCarbonIntensity.Function` | `deploy/grid-carbon-intensity.bicep` | `deploy/grid-carbon-intensity.bicepparam` |
-| `CarbonAwareComputing.ForecastUpdater.Function` | `deploy/forecast-updater.bicep` | `deploy/forecast-updater.bicepparam` |
+| `CarbonAwareComputing.ExecutionForecast.Function` | `deploy/cac-execution-forecast.bicep` | `deploy/cac-execution-forecast.bicepparam` |
+| `CarbonAwareComputing.GridCarbonIntensity.Function` | `deploy/cac-grid-carbon-intensity.bicep` | `deploy/cac-grid-carbon-intensity.bicepparam` |
+| `CarbonAwareComputing.ForecastUpdater.Function` | `deploy/cac-forecast-updater.bicep` | `deploy/cac-forecast-updater.bicepparam` |
 
 Each deployment creates a **Windows Consumption plan (Y1/Dynamic)**, a .NET 10
 isolated / Functions v4 app with a system-assigned managed identity, a private
@@ -147,7 +147,7 @@ az login
 az account set --subscription "<subscription-id>"
 az group create --name Carbon-Aware-Computing --location westeurope
 
-for deployment in execution-forecast grid-carbon-intensity forecast-updater; do
+for deployment in cac-execution-forecast cac-grid-carbon-intensity cac-forecast-updater; do
   az deployment group what-if \
     --resource-group Carbon-Aware-Computing \
     --parameters "deploy/$deployment.bicepparam"
@@ -157,7 +157,7 @@ done
 Review the proposed changes, then provision each app:
 
 ``` bash
-for deployment in execution-forecast grid-carbon-intensity forecast-updater; do
+for deployment in cac-execution-forecast cac-grid-carbon-intensity cac-forecast-updater; do
   az deployment group create \
     --name "$deployment" \
     --resource-group Carbon-Aware-Computing \

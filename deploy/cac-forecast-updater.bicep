@@ -13,12 +13,13 @@ param clientId string
 @minLength(1)
 param clientSecret string
 
-@description('Use the same password for ExecutionForecast and GridCarbonIntensity so API keys work on both APIs.')
-@secure()
-@minLength(1)
-param apiKeyPassword string
+@description('Resource group of the existing carbonawarecomputing Storage Account, in the deployment subscription.')
+param forecastStorageResourceGroup string
 
-module app './modules/windows-consumption-function.bicep' = {
+@description('Comma-separated computing location names for which forecast history is written.')
+param writeHistoryFor string = ''
+
+module app './modules/cac-windows-consumption-function.bicep' = {
   name: '${functionAppName}-infra'
   params: {
     functionAppName: functionAppName
@@ -29,8 +30,16 @@ module app './modules/windows-consumption-function.bicep' = {
       ApplicationSettings__TenantId: tenantId
       ApplicationSettings__ClientId: clientId
       ApplicationSettings__ClientSecret: clientSecret
-      ApplicationSettings__ApiKeyPassword: apiKeyPassword
+      ApplicationSettings__WriteHistoryFor: writeHistoryFor
     }
+  }
+}
+
+module forecastStorageAccess './modules/cac-forecast-storage-access.bicep' = {
+  name: '${functionAppName}-storage-rbac'
+  scope: resourceGroup(forecastStorageResourceGroup)
+  params: {
+    principalId: app.outputs.principalId
   }
 }
 
