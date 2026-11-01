@@ -1,6 +1,6 @@
 using './grid-carbon-intensity.bicep'
 
-param functionAppName = 'cac-grid-carbon-intensity-dev'
+param functionAppName = 'cac-grid-carbon-intensity'
 param location = 'westeurope'
 param tags = {
   application: 'Carbon-Aware-Computing'
