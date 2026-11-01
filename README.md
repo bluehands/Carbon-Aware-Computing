@@ -184,6 +184,56 @@ The apps run prebuilt packages (`WEBSITE_RUN_FROM_PACKAGE=1`).
 The updater's timers are active after code deployment and write to the existing
 shared forecast store; schedules use UTC. Set `writeHistoryFor` in its variable
 file to a comma-separated list of location names to retain history.
+### Manual infrastructure and Functions deployment
+
+The separate workflow `.github/workflows/azure-functions-infrastructure.yml`
+is triggered only via `workflow_dispatch`. It builds and tests the solution using
+.NET 10 (and .NET 6 for the existing tests), packages all three Functions, validates
+all three Bicep parameter files, then provisions and deploys each app. App names
+are read from the Bicep deployment outputs, not duplicated in the workflow.
+The existing push/Staging workflow is unchanged.
+
+The deployment uses the existing GitHub environment `dev`, resource group
+`Carbon-Aware-Computing` and the names/location/tags in `deploy/*.bicepparam`.
+Adjust those non-secret values before running if necessary. The resource group
+is created in `westeurope` if absent. This deploys directly to the new Windows
+Consumption apps, not to slots or the existing Linux apps.
+
+Reuse the existing authentication names `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`
+and `AZURE_SUBSCRIPTION_ID` as repository or `dev` environment secrets/variables
+(secrets take precedence). These identify the Azure deployment identity, not
+the Microsoft Graph mail application. Configure an OIDC federated credential
+with subject `repo:bluehands/Carbon-Aware-Computing:environment:dev`.
+The identity needs resource group creation/deployment, ZIP deployment and role
+assignment permissions on the existing forecast storage resource group.
+
+Create the following GitHub Actions secrets in the repository or `dev`
+environment if they are not already present:
+
+| Secret | Value |
+| --- | --- |
+| `CAC_MAIL_FROM` | Sender mailbox for registration/notification mail |
+| `CAC_TENANT_ID` | Microsoft Graph mail application's tenant ID |
+| `CAC_CLIENT_ID` | Microsoft Graph mail application's client ID |
+| `CAC_CLIENT_SECRET` | Microsoft Graph mail application's client secret |
+| `CAC_API_KEY_PASSWORD` | Shared API-key password for both APIs |
+
+The workflow passes these secrets as environment variables to the existing
+`readEnvironmentVariable(...)` calls in the parameter files. It fails explicitly
+on missing configuration and does not upload resolved parameter files or print
+deployment settings. The secret inventory could not be verified from the coding
+session (Actions secrets API returned HTTP 403), so this is a required-secret
+list, not a confirmed list of missing secrets.
+
+After merging the workflow into the default branch, open **Actions > Deploy Azure
+Functions and infrastructure > Run workflow** and select the branch containing
+the .NET 10 projects and Bicep files. Ensure `dev` deployment branch rules permit
+that branch; configure environment approval rules if desired. Starting the
+workflow provisions Azure resources and deploys code; ForecastUpdater timers
+become active and write to the existing shared forecast store. The run summary
+contains the deployed commit and app URLs. No Azure deployment is performed
+merely by adding this workflow.
+
 ### Azure Functions CI/CD
 
 The GitHub Actions workflow `.github/workflows/azure-functions.yml` runs on pushes to every branch except `main`. It restores, builds and tests the solution in Release mode, then publishes one ZIP artifact per Function App:
