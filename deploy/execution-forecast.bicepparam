@@ -1,6 +1,6 @@
 using './execution-forecast.bicep'
 
-param functionAppName = 'cac-execution-forecast-dev'
+param functionAppName = 'cac-execution-forecast'
 param location = 'westeurope'
 param tags = {
   application: 'Carbon-Aware-Computing'
