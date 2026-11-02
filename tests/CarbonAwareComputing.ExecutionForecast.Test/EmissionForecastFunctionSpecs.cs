@@ -22,7 +22,7 @@ public class EmissionForecastFunctionSpecs
     [DataRow(60, 120, 3)]
     [DataRow(60, 1500, 30)]
     [DataRow(0, 30, 60)]
-    public async Task UnavailablePeriodReturnsGoneWithProblemDetails(int startMinutes, int endMinutes, int windowSize)
+    public async Task UnavailablePeriodReturnsNotFoundWithProblemDetails(int startMinutes, int endMinutes, int windowSize)
     {
         var start = DataStart.AddMinutes(startMinutes);
         var end = DataStart.AddMinutes(endMinutes);
@@ -33,13 +33,13 @@ public class EmissionForecastFunctionSpecs
 
         Assert.IsInstanceOfType(result, typeof(ObjectResult));
         var response = (ObjectResult)result;
-        Assert.AreEqual(410, response.StatusCode);
+        Assert.AreEqual(404, response.StatusCode);
         CollectionAssert.Contains(response.ContentTypes.ToArray(), "application/problem+json");
         Assert.IsInstanceOfType(response.Value, typeof(ProblemDetails));
         var problem = (ProblemDetails)response.Value!;
-        Assert.AreEqual(410, problem.Status);
+        Assert.AreEqual(404, problem.Status);
         Assert.AreEqual("Forecast data unavailable", problem.Title);
-        Assert.AreEqual("https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.11", problem.Type);
+        Assert.AreEqual("https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.5", problem.Type);
         StringAssert.Contains(problem.Detail, "'de'");
         StringAssert.Contains(problem.Detail, start.ToString("O"));
         StringAssert.Contains(problem.Detail, end.ToString("O"));
@@ -57,11 +57,11 @@ public class EmissionForecastFunctionSpecs
             RouteData = new Microsoft.AspNetCore.Routing.RouteData(),
             ActionDescriptor = new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor()
         });
-        Assert.AreEqual(410, request.HttpContext.Response.StatusCode);
+        Assert.AreEqual(404, request.HttpContext.Response.StatusCode);
         StringAssert.StartsWith(request.HttpContext.Response.ContentType, "application/problem+json");
         body.Position = 0;
         using var json = await JsonDocument.ParseAsync(body);
-        Assert.AreEqual(410, json.RootElement.GetProperty("status").GetInt32());
+        Assert.AreEqual(404, json.RootElement.GetProperty("status").GetInt32());
         Assert.AreEqual(problem.Detail, json.RootElement.GetProperty("detail").GetString());
     }
 
@@ -80,17 +80,17 @@ public class EmissionForecastFunctionSpecs
     }
 
     [TestMethod]
-    public void OpenApiDocumentsGoneProblemResponse()
+    public void OpenApiDocumentsNotFoundProblemResponse()
     {
         var responses = typeof(EmissionForecastFunction)
             .GetMethod(nameof(EmissionForecastFunction.GetBestExecutionTime))!
             .GetCustomAttributes(typeof(OpenApiResponseWithBodyAttribute), false)
             .Cast<OpenApiResponseWithBodyAttribute>().ToArray();
 
-        var gone = responses.Single(response => response.StatusCode == HttpStatusCode.Gone);
-        Assert.AreEqual(typeof(ProblemDetails), gone.BodyType);
-        Assert.AreEqual("application/problem+json", gone.ContentType);
-        Assert.IsFalse(responses.Any(response => response.StatusCode == HttpStatusCode.NotFound));
+        var notFound = responses.Single(response => response.StatusCode == HttpStatusCode.NotFound);
+        Assert.AreEqual(typeof(ProblemDetails), notFound.BodyType);
+        Assert.AreEqual("application/problem+json", notFound.ContentType);
+        Assert.IsFalse(responses.Any(response => response.StatusCode == HttpStatusCode.Gone));
     }
 
     private static EmissionForecastFunction CreateFunction()
